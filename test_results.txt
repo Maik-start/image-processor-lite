@@ -1,0 +1,45 @@
+============================= test session starts ==============================
+platform linux -- Python 3.12.3, pytest-9.0.2, pluggy-1.6.0 -- /home/virus-one/Documents/code/package_dev/venv/bin/python3
+cachedir: .pytest_cache
+rootdir: /home/virus-one/Documents/code/package_dev
+configfile: pytest.ini
+plugins: cov-7.0.0
+collecting ... collected 17 items
+
+tests/test_config.py::TestImageProcessorConfig::test_initialization PASSED [  5%]
+tests/test_config.py::TestImageProcessorConfig::test_enable_disable_module PASSED [ 11%]
+tests/test_config.py::TestImageProcessorConfig::test_enable_disable_all_modules PASSED [ 17%]
+tests/test_config.py::TestImageProcessorConfig::test_set_get_module_options PASSED [ 23%]
+tests/test_config.py::TestImageProcessorConfig::test_save_load_config PASSED [ 29%]
+tests/test_config.py::TestImageProcessorConfig::test_invalid_module_name PASSED [ 35%]
+tests/test_config.py::TestImageProcessorConfig::test_get_status PASSED   [ 41%]
+tests/test_config.py::TestModuleConfig::test_module_config_creation PASSED [ 47%]
+tests/test_config.py::TestModuleConfig::test_module_config_defaults PASSED [ 52%]
+tests/test_processor.py::TestImageProcessor::test_initialization PASSED  [ 58%]
+tests/test_processor.py::TestImageProcessor::test_all_modules_initialized PASSED [ 64%]
+tests/test_processor.py::TestImageProcessor::test_detect_shapes PASSED   [ 70%]
+tests/test_processor.py::TestImageProcessor::test_measure_distance PASSED [ 76%]
+tests/test_processor.py::TestImageProcessor::test_analyze_visual_properties PASSED [ 82%]
+tests/test_processor.py::TestImageProcessor::test_get_status PASSED      [ 88%]
+tests/test_processor.py::TestImageProcessor::test_module_disable_returns_none PASSED [ 94%]
+tests/test_processor.py::TestImageProcessor::test_repr PASSED            [100%]
+
+================================ tests coverage ================================
+_______________ coverage: platform linux, python 3.12.3-final-0 ________________
+
+Name                                            Stmts   Miss  Cover   Missing
+-----------------------------------------------------------------------------
+imgprocessor/__init__.py                           84     25    70%   78, 90, 100, 112, 125-127, 140-142, 162, 168, 209-229
+imgprocessor/config/__init__.py                     2      0   100%
+imgprocessor/config/module_config.py               50      2    96%   74, 126
+imgprocessor/distance_measurement/__init__.py       2      0   100%
+imgprocessor/distance_measurement/measurer.py      84     52    38%   24, 57-62, 99-115, 134-149, 166-175, 184, 200, 218-235
+imgprocessor/shape_detection/__init__.py            2      0   100%
+imgprocessor/shape_detection/detector.py          100     45    55%   24, 103, 121-139, 146, 153-185, 221-247, 263-275
+imgprocessor/text_detection/__init__.py             2      0   100%
+imgprocessor/text_detection/detector.py            73     47    36%   22, 52-60, 73-76, 80-105, 110-132, 145-146, 150-151
+imgprocessor/visual_analysis/__init__.py            2      0   100%
+imgprocessor/visual_analysis/analyzer.py          102     35    66%   31, 187-199, 211-221, 234-243, 256-270, 287-292
+-----------------------------------------------------------------------------
+TOTAL                                             503    206    59%
+============================== 17 passed in 6.83s ==============================
