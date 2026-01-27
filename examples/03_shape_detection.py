@@ -14,42 +14,45 @@ from imgprocessor import ImageProcessor
 
 
 def create_sample_image():
-    """Crée une image d'exemple avec des formes."""
-    # Créer une image blanche
-    image = np.ones((400, 500, 3), dtype=np.uint8) * 255
+    """Crée une image d'exemple avec des formes géométriques."""
+    # Initialiser l'image blanche
+    image = np.full((400, 500, 3), 255, dtype=np.uint8)
     
-    # Dessiner un cercle
-    cv2.circle(image, (100, 100), 50, (0, 0, 255), -1)
+    # Formes principales
+    cv2.circle(image, (100, 100), 50, (0, 0, 255), -1)  # Cercle rouge
+    cv2.rectangle(image, (200, 50), (350, 150), (0, 255, 0), -1)  # Rectangle vert
     
-    # Dessiner un rectangle
-    cv2.rectangle(image, (200, 50), (350, 150), (0, 255, 0), -1)
-    
-    # Dessiner un triangle
+    # Triangle rempli
     triangle = np.array([[400, 300], [450, 200], [300, 200]], np.int32)
-    cv2.polylines(image, [triangle], True, (255, 0, 0), -1)
+    cv2.fillPoly(image, [triangle], (255, 0, 0))  # Triangle bleu
     
-    # Dessiner quelques contours
-    cv2.circle(image, (100, 300), 30, (255, 0, 255), -1)
-    cv2.rectangle(image, (250, 250), (350, 350), (128, 128, 0), -1)
+    # Formes supplémentaires
+    cv2.circle(image, (100, 300), 30, (255, 0, 255), -1)  # Petit cercle magenta
+    cv2.rectangle(image, (250, 250), (350, 350), (128, 128, 0), -1)  # Rectangle olive
     
     return image
 
 
 def example_shape_detection():
-    """Exemple de détection de formes."""
+    """Exemple de détection de formes géométriques."""
     print("=" * 60)
     print("Exemple 3: Détection de Formes Géométriques")
     print("=" * 60)
     
-    # Créer une instance du processeur
+    # Initialiser le processeur
     processor = ImageProcessor()
     
-    # Désactiver les modules inutiles
-    processor.config.enable_module('text_detection', False)
-    processor.config.enable_module('distance_measurement', False)
-    processor.config.enable_module('visual_analysis', False)
+    # Configuration optimisée: activer shape_detection, désactiver les autres
+    modules_config = {
+        'text_detection': False,
+        'shape_detection': True,
+        'distance_measurement': False,
+        'visual_analysis': False
+    }
+    for module, enabled in modules_config.items():
+        processor.config.enable_module(module, enabled)
     
-    # Configurer la détection de formes
+    # Configurer les options de détection
     processor.config.set_module_options('shape_detection', {
         'detect_circles': True,
         'detect_rectangles': True,
@@ -57,70 +60,56 @@ def example_shape_detection():
         'min_contour_area': 50
     })
     
-    print("\nConfiguration:")
-    print("  ✗ Détection de texte: DÉSACTIVÉE")
-    print("  ✓ Détection de formes: ACTIVÉE")
-    print("  ✗ Mesure de distances: DÉSACTIVÉE")
-    print("  ✗ Analyse visuelle: DÉSACTIVÉE")
+    # Afficher le statut
+    print("\nConfiguration active:")
+    for module, enabled in modules_config.items():
+        status = "✓ ACTIVÉ" if enabled else "✗ DÉSACTIVÉ"
+        print(f"  {module}: {status}")
     
-    print("\nOptions du module de détection de formes:")
-    options = processor.config.get_module_options('shape_detection')
-    for key, value in options.items():
+    print("\nOptions du module shape_detection:")
+    for key, value in processor.config.get_module_options('shape_detection').items():
         print(f"  {key}: {value}")
     
-    # Créer une image d'exemple
-    print("\nCréation d'une image d'exemple avec des formes...")
+    # Traitement de l'image
+    print("\nCréation et analyse de l'image...")
     image = create_sample_image()
+    shapes = processor.detect_shapes(image) if processor.config.is_module_enabled('shape_detection') else []
     
-    # Détecter les formes
-    print("Détection des formes en cours...")
-    if processor.config.is_module_enabled('shape_detection'):
-        shapes = processor.detect_shapes(image)
-        
-        if shapes:
-            print(f"\n✓ {len(shapes)} formes détectées:")
-            for i, shape in enumerate(shapes, 1):
-                print(f"\n  Forme {i}:")
-                print(f"    Type: {shape.shape_type}")
-                print(f"    Centre: ({shape.center[0]:.1f}, {shape.center[1]:.1f})")
-                print(f"    Superficie: {shape.area:.2f} pixels²")
-                print(f"    Périmètre: {shape.perimeter:.2f} pixels")
-                if shape.properties:
-                    print(f"    Propriétés:")
-                    for key, value in shape.properties.items():
-                        print(f"      {key}: {value}")
-        else:
-            print("✗ Aucune forme détectée")
+    # Afficher les résultats
+    if shapes:
+        print(f"\n✓ {len(shapes)} forme(s) détectée(s):\n")
+        for i, shape in enumerate(shapes, 1):
+            center_x, center_y = shape.center
+            print(f"  Forme {i}:")
+            print(f"    Type: {shape.shape_type}")
+            print(f"    Centre: ({center_x:.1f}, {center_y:.1f})")
+            print(f"    Superficie: {shape.area:.2f} pixels²")
+            print(f"    Périmètre: {shape.perimeter:.2f} pixels")
+            if shape.properties:
+                for key, value in shape.properties.items():
+                    print(f"    {key}: {value}")
+    else:
+        print("✗ Aucune forme détectée")
     
-    # Sauvegarder l'image
+    # Sauvegarder le résultat
     output_path = Path(__file__).parent / "sample_image_with_shapes.jpg"
     cv2.imwrite(str(output_path), image)
-    print(f"\nImage d'exemple sauvegardée: {output_path}")
+    print(f"\nImage sauvegardée: {output_path}")
     
+
     print("\n" + "=" * 60)
-    print("Code d'exemple pour utiliser la détection de formes:")
+    print("Utilisation rapide:")
     print("""
 import cv2
 from imgprocessor import ImageProcessor
 
 processor = ImageProcessor()
-
-# Charger une image
-image = cv2.imread('mon_image.jpg')
+image = cv2.imread('image.jpg')
 
 # Détecter toutes les formes
-if processor.config.is_module_enabled('shape_detection'):
-    shapes = processor.detect_shapes(image)
-    for shape in shapes:
-        print(f"Type: {shape.shape_type}")
-        print(f"Centre: {shape.center}")
-        print(f"Superficie: {shape.area}")
-    
-    # Ou détecter seulement les cercles
-    circles = processor.detect_circles(image)
-    
-    # Ou détecter seulement les rectangles
-    rectangles = processor.detect_rectangles(image)
+shapes = processor.detect_shapes(image)
+for shape in shapes:
+    print(f"{shape.shape_type} au centre {shape.center}")
 """)
 
 

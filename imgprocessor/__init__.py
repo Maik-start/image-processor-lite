@@ -20,6 +20,7 @@ from .text_detection import TextDetector, TextRegion
 from .shape_detection import ShapeDetector, Shape
 from .distance_measurement import DistanceMeasurer, Distance
 from .visual_analysis import VisualAnalyzer, VisualAnalysis
+from .optimization import ImageOptimizer, FastImageProcessor
 
 __version__ = "1.0.0"
 __author__ = "ImageProcessor Team"
@@ -49,14 +50,17 @@ class ImageProcessor:
         >>>     shapes = processor.detect_shapes(image)
     """
     
-    def __init__(self, config_file: Optional[str] = None):
+    def __init__(self, config_file: Optional[str] = None, optimization: str = "balanced"):
         """
         Initialise le processeur d'images.
         
         Args:
             config_file: Chemin optionnel vers un fichier de configuration JSON
+            optimization: Profil d'optimisation ("speed", "quality", "balanced")
         """
         self.config = ImageProcessorConfig(config_file)
+        self.optimizer = ImageOptimizer(optimization)
+        self.optimization_enabled = True
         
         # Initialiser les modules selon la configuration
         self._init_modules()
@@ -111,19 +115,25 @@ class ImageProcessor:
         else:
             self.visual_analyzer = None
     
-    def detect_text(self, image: np.ndarray, min_confidence: float = 0.5) -> Optional[List[TextRegion]]:
+    def detect_text(self, image: np.ndarray, min_confidence: float = 0.5, optimize: bool = True) -> Optional[List[TextRegion]]:
         """
         Détecte le texte dans l'image.
         
         Args:
             image: Image en format numpy array
             min_confidence: Seuil de confiance minimum
+            optimize: Appliquer l'optimisation d'image
         
         Returns:
             Liste des régions de texte ou None si module désactivé
         """
         if not self.config.is_module_enabled('text_detection') or self.text_detector is None:
             return None
+        
+        # Optimiser l'image si activé
+        if optimize and self.optimization_enabled:
+            image, info = self.optimizer.preprocess_image(image)
+        
         return self.text_detector.detect(image, min_confidence)
     
     def extract_text(self, image: np.ndarray, min_confidence: float = 0.5) -> Optional[str]:
@@ -141,18 +151,24 @@ class ImageProcessor:
             return None
         return self.text_detector.extract_text(image, min_confidence)
     
-    def detect_shapes(self, image: np.ndarray) -> Optional[List[Shape]]:
+    def detect_shapes(self, image: np.ndarray, optimize: bool = True) -> Optional[List[Shape]]:
         """
         Détecte les formes géométriques.
         
         Args:
             image: Image en format numpy array
+            optimize: Appliquer l'optimisation d'image
         
         Returns:
             Liste des formes détectées ou None si module désactivé
         """
         if not self.config.is_module_enabled('shape_detection') or self.shape_detector is None:
             return None
+        
+        # Optimiser l'image si activé
+        if optimize and self.optimization_enabled:
+            image, info = self.optimizer.preprocess_image(image)
+        
         return self.shape_detector.detect_shapes(image)
     
     def detect_circles(self, image: np.ndarray) -> Optional[List[Shape]]:
@@ -182,18 +198,24 @@ class ImageProcessor:
             return None
         return self.distance_measurer.euclidean_distance(point1, point2)
     
-    def analyze_visual_properties(self, image: np.ndarray) -> Optional[VisualAnalysis]:
+    def analyze_visual_properties(self, image: np.ndarray, optimize: bool = True) -> Optional[VisualAnalysis]:
         """
         Analyse les propriétés visuelles de l'image.
         
         Args:
             image: Image en format numpy array
+            optimize: Appliquer l'optimisation d'image
         
         Returns:
             Objet VisualAnalysis ou None si module désactivé
         """
         if not self.config.is_module_enabled('visual_analysis') or self.visual_analyzer is None:
             return None
+        
+        # Optimiser l'image si activé
+        if optimize and self.optimization_enabled:
+            image, info = self.optimizer.preprocess_image(image)
+        
         return self.visual_analyzer.analyze(image)
     
     def process_image(self, image_path: str) -> Dict:
@@ -234,7 +256,7 @@ class ImageProcessor:
     
     def __repr__(self) -> str:
         status = {name: config.enabled for name, config in self.config.modules.items()}
-        return f"ImageProcessor(modules={status})"
+        return f"ImageProcessor(modules={status}, optimization={self.optimizer.profile.value})"
 
 
 __all__ = [
@@ -247,5 +269,7 @@ __all__ = [
     'TextRegion',
     'Shape',
     'Distance',
-    'VisualAnalysis'
+    'VisualAnalysis',
+    'ImageOptimizer',
+    'FastImageProcessor'
 ]
