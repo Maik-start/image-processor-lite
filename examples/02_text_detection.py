@@ -18,8 +18,8 @@ def example_text_detection():
     print("Exemple 2: Détection de Texte")
     print("=" * 60)
     
-    # Créer une instance du processeur
-    processor = ImageProcessor()
+    # Créer une instance du processeur avec optimisation de vitesse pour OCR
+    processor = ImageProcessor(optimization="speed")
     
     # Désactiver les modules inutiles
     processor.config.enable_module('shape_detection', False)

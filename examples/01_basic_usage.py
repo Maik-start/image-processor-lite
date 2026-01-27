@@ -19,8 +19,8 @@ def example_basic_usage():
     print("Exemple 1: Utilisation Basique")
     print("=" * 60)
     
-    # Créer une instance du processeur
-    processor = ImageProcessor()
+    # Créer une instance du processeur avec optimisation équilibrée
+    processor = ImageProcessor(optimization="balanced")
     
     # Afficher le statut de tous les modules
     status = processor.get_status()

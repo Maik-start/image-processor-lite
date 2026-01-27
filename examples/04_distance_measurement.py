@@ -40,8 +40,8 @@ def example_distance_measurement():
     print("Exemple 4: Mesure de Distances")
     print("=" * 60)
     
-    # Créer une instance du processeur
-    processor = ImageProcessor()
+    # Créer une instance du processeur avec optimisation de vitesse
+    processor = ImageProcessor(optimization="speed")
     
     # Désactiver les modules inutiles
     processor.config.enable_module('text_detection', False)

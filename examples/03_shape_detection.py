@@ -39,8 +39,8 @@ def example_shape_detection():
     print("Exemple 3: Détection de Formes Géométriques")
     print("=" * 60)
     
-    # Initialiser le processeur
-    processor = ImageProcessor()
+    # Initialiser le processeur avec qualité pour meilleure précision
+    processor = ImageProcessor(optimization="quality")
     
     # Configuration optimisée: activer shape_detection, désactiver les autres
     modules_config = {

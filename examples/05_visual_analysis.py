@@ -38,8 +38,8 @@ def example_visual_analysis():
     print("Exemple 5: Analyse Visuelle")
     print("=" * 60)
     
-    # Créer une instance du processeur
-    processor = ImageProcessor()
+    # Créer une instance du processeur avec optimisation équilibrée
+    processor = ImageProcessor(optimization="balanced")
     
     # Désactiver les modules inutiles
     processor.config.enable_module('text_detection', False)
