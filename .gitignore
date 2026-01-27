@@ -138,3 +138,4 @@ Thumbs.db
 *.png
 config_*.json
 sample_image_*.jpg
+doc/
