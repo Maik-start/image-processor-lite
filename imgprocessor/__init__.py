@@ -71,8 +71,10 @@ class ImageProcessor:
         if self.config.is_module_enabled('text_detection'):
             try:
                 options = self.config.get_module_options('text_detection')
+                # Utiliser des codes de langue modernes (en, fr au lieu de eng, fra)
+                languages = options.get('language', ['en', 'fr'])
                 self.text_detector = TextDetector(
-                    languages=options.get('language', ['fra', 'eng']),
+                    languages=languages,
                     engine=options.get('engine', 'easyocr')
                 )
             except Exception as e:

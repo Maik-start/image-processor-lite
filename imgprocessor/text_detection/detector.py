@@ -37,27 +37,49 @@ class TextDetector:
         Initialise le détecteur de texte.
         
         Args:
-            languages: Liste des langues à reconnaître (ex: ['fra', 'eng'])
+            languages: Liste des langues à reconnaître (ex: ['en', 'fr'])
             engine: Moteur OCR à utiliser ('easyocr' ou 'tesseract')
         """
-        self.languages = languages or ['fra', 'eng']
+        # Normaliser les codes de langue pour easyOCR (en lieu de eng, fr lieu de fra)
+        if languages is None:
+            languages = ['en', 'fr']
+        else:
+            # Convertir fra->fr, eng->en pour compatibilité easyOCR
+            normalized = []
+            lang_map = {'fra': 'fr', 'eng': 'en', 'fre': 'fr', 'english': 'en', 'french': 'fr'}
+            for lang in languages:
+                normalized.append(lang_map.get(lang.lower(), lang))
+            languages = normalized
+        
+        self.languages = languages
         self.engine = engine
         self.reader = None
+        self.init_success = False
         
         if engine == 'easyocr':
             try:
                 import easyocr
-                self.reader = easyocr.Reader(self.languages, gpu=False)
+                # Essayer avec les langues spécifiées, fallback sur 'en' si erreur
+                try:
+                    self.reader = easyocr.Reader(self.languages, gpu=False, verbose=False)
+                    self.init_success = True
+                except Exception as lang_error:
+                    print(f"Fallback: Tentative avec anglais uniquement - {lang_error}")
+                    try:
+                        self.reader = easyocr.Reader(['en'], gpu=False, verbose=False)
+                        self.init_success = True
+                        self.languages = ['en']
+                    except Exception as fallback_error:
+                        print(f"Avertissement: easyOCR non disponible - {fallback_error}")
             except ImportError:
                 raise ImportError("easyocr non installé. Installez avec: pip install easyocr")
         elif engine == 'tesseract':
             try:
                 import pytesseract
                 self.pytesseract = pytesseract
+                self.init_success = True
             except ImportError:
                 raise ImportError("pytesseract non installé. Installez avec: pip install pytesseract")
-        else:
-            raise ValueError(f"Moteur OCR inconnu: {engine}")
     
     def detect(self, image: np.ndarray, min_confidence: float = 0.5) -> List[TextRegion]:
         """
@@ -70,14 +92,33 @@ class TextDetector:
         Returns:
             Liste des régions de texte détectées
         """
+        if not self.init_success:
+            print("Avertissement: Moteur OCR non initialisé correctement")
+            return []
+        
         if self.engine == 'easyocr':
             return self._detect_easyocr(image, min_confidence)
         elif self.engine == 'tesseract':
             return self._detect_tesseract(image, min_confidence)
+        return []
     
     def _detect_easyocr(self, image: np.ndarray, min_confidence: float) -> List[TextRegion]:
-        """Détection avec EasyOCR."""
-        results = self.reader.readtext(image)
+        """Détection avec EasyOCR avec prétraitement amélioré."""
+        if self.reader is None:
+            return []
+        
+        # Prétraitement pour améliorer la détection
+        # Conversion en RGB (easyOCR préfère RGB)
+        if len(image.shape) == 3 and image.shape[2] == 3:
+            rgb_image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+        else:
+            rgb_image = image
+        
+        try:
+            results = self.reader.readtext(rgb_image, detail=1)
+        except Exception as e:
+            print(f"Erreur easyOCR: {e}")
+            return []
         
         text_regions = []
         for detection in results:
