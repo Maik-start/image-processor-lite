@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 """
-Installation et Configuration du Package imgprocessor
+Installation et Configuration du Package image-processor-lite
 """
 
 import os
@@ -21,7 +21,7 @@ def print_section(text):
 def main():
     """Guide d'installation."""
     
-    print_header("GUIDE D'INSTALLATION - imgprocessor")
+    print_header("GUIDE D'INSTALLATION - image-processor-lite")
     
     print("Bienvenue dans imgprocessor!")
     print("Un package modulaire de traitement d'images.")

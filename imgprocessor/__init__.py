@@ -1,5 +1,5 @@
 """
-imgprocessor - Package modulaire de traitement et d'analyse d'images.
+image-processor-lite - Package modulaire de traitement et d'analyse d'images.
 
 Un package permettant d'effectuer indépendamment les opérations suivantes:
 - Détection et extraction de texte (OCR)
@@ -49,7 +49,7 @@ def _print_optimization_status():
     if not hasattr(sys, '_imgprocessor_status_printed'):
         print(f"""
 ╔════════════════════════════════════════════════════════╗
-║ 🚀 imgprocessor v{__version__} - Modules Optimisés Actifs
+║ 🚀 image-processor-lite v{__version__} - Modules Optimisés Actifs
 ║
 ║  Image Filters:    {status_filter}
 ║  Geometry Utils:   {status_geom}

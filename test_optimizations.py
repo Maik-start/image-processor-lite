@@ -246,7 +246,7 @@ def main():
     """Point d'entrée."""
     print("\n" + "╔" + "="*68 + "╗")
     print("║" + " "*68 + "║")
-    print("║" + "  🚀 TEST DES OPTIMISATIONS C/C++ - imgprocessor".center(68) + "║")
+    print("║" + "  🚀 TEST DES OPTIMISATIONS C/C++ - image-processor-lite".center(68) + "║")
     print("║" + " "*68 + "║")
     print("╚" + "="*68 + "╝")
     
