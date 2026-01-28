@@ -3,6 +3,14 @@ __pycache__/
 *.py[cod]
 *$py.class
 
+# Generated report files (keep requirements.txt and test_results.txt)
+FINAL_REPORT.txt
+GITHUB_READY.txt
+IMPLEMENTATION_COMPLETE.txt
+INSTALLATION_COMPLETE.txt
+PROJECT_TREE.txt
+INSTALLATION_GUIDE.txt
+
 # C extensions
 *.so
 
