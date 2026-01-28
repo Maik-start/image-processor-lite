@@ -1,12 +1,31 @@
 """
 Module d'analyse visuelle des images.
 Analyse la luminosité, le contraste, la teinte et autres propriétés visuelles.
+Détecte les objets visuels cohérents: régions avec continuité spatiale et stabilité chromatique.
 """
 
 import cv2
 import numpy as np
-from typing import Dict, Tuple, List
-from dataclasses import dataclass
+from typing import Dict, Tuple, List, Optional
+from dataclasses import dataclass, field
+from scipy import ndimage
+
+
+@dataclass
+class VisualObject:
+    """Représente un objet visuel détecté."""
+    object_id: int
+    label: str  # 'unknown', 'natural', 'artificial', 'geometric', 'abstract'
+    area: int
+    perimeter: float
+    centroid: Tuple[float, float]
+    bounding_box: Tuple[int, int, int, int]  # (x, y, w, h)
+    dominant_color: Tuple[int, int, int]  # (B, G, R)
+    mean_brightness: float
+    chromatic_stability: float  # 0-1, mesure l'homogénéité chromatique
+    contour_regularity: float  # 0-1, mesure la régularité du contour
+    solidity: float  # 0-1, rapport aire/aire du convex hull
+    aspect_ratio: float  # rapport largeur/hauteur
 
 
 @dataclass
@@ -19,6 +38,8 @@ class VisualAnalysis:
     value: float = 0.0
     color_histogram: Dict = None
     edge_density: float = 0.0
+    objects: List[VisualObject] = field(default_factory=list)
+    object_density: float = 0.0  # nombre d'objets détectés
     
     def __post_init__(self):
         if self.hue_distribution is None:
@@ -35,20 +56,43 @@ class VisualAnalysis:
             'saturation': float(self.saturation),
             'value': float(self.value),
             'color_histogram': self.color_histogram,
-            'edge_density': float(self.edge_density)
+            'edge_density': float(self.edge_density),
+            'object_count': len(self.objects),
+            'object_density': float(self.object_density),
+            'objects': [
+                {
+                    'id': obj.object_id,
+                    'label': obj.label,
+                    'area': obj.area,
+                    'perimeter': float(obj.perimeter),
+                    'centroid': obj.centroid,
+                    'bounding_box': obj.bounding_box,
+                    'dominant_color': obj.dominant_color,
+                    'mean_brightness': float(obj.mean_brightness),
+                    'chromatic_stability': float(obj.chromatic_stability),
+                    'contour_regularity': float(obj.contour_regularity),
+                    'solidity': float(obj.solidity),
+                    'aspect_ratio': float(obj.aspect_ratio)
+                }
+                for obj in self.objects
+            ]
         }
 
 
 class VisualAnalyzer:
     """
     Analyste des propriétés visuelles des images.
+    Détecte et analyse les objets visuels cohérents.
     """
     
     def __init__(self, 
                  analyze_brightness: bool = True,
                  analyze_contrast: bool = True,
                  analyze_hue: bool = True,
-                 bins: int = 256):
+                 detect_objects: bool = True,
+                 bins: int = 256,
+                 min_object_size: int = 100,
+                 max_object_size: Optional[int] = None):
         """
         Initialise l'analyseur visuel.
         
@@ -56,12 +100,18 @@ class VisualAnalyzer:
             analyze_brightness: Analyser la luminosité
             analyze_contrast: Analyser le contraste
             analyze_hue: Analyser la teinte
+            detect_objects: Détecter les objets visuels
             bins: Nombre de bandes pour les histogrammes
+            min_object_size: Taille minimale d'objet (pixels)
+            max_object_size: Taille maximale d'objet (None = pas de limite)
         """
         self.analyze_brightness = analyze_brightness
         self.analyze_contrast = analyze_contrast
         self.analyze_hue = analyze_hue
+        self.detect_objects = detect_objects
         self.bins = bins
+        self.min_object_size = min_object_size
+        self.max_object_size = max_object_size
     
     def analyze(self, image: np.ndarray) -> VisualAnalysis:
         """
@@ -100,6 +150,11 @@ class VisualAnalyzer:
         
         # Densité des contours
         analysis.edge_density = self._compute_edge_density(gray)
+        
+        # Détection des objets visuels cohérents
+        if self.detect_objects:
+            analysis.objects = self._detect_visual_objects(image, gray, hsv)
+            analysis.object_density = len(analysis.objects) / (image.shape[0] * image.shape[1]) * 10000
         
         return analysis
     
@@ -290,3 +345,263 @@ class VisualAnalyzer:
         enhanced = cv2.convertScaleAbs(enhanced, alpha=1.0, beta=(brightness_factor - 1.0) * 255)
         
         return np.clip(enhanced, 0, 255).astype(np.uint8)
+    
+    # ============= DÉTECTION D'OBJETS VISUELS COHÉRENTS =============
+    
+    def _detect_visual_objects(self, image: np.ndarray, gray: np.ndarray, 
+                               hsv: np.ndarray) -> List[VisualObject]:
+        """
+        Détecte les régions visuelles cohérentes (objets).
+        Utilise une combinaison de:
+        - segmentation par couleur (stabilité chromatique)
+        - analyse de contours (frontières mesurables)
+        - continuité spatiale (connected components)
+        
+        Args:
+            image: Image originale BGR
+            gray: Image en niveaux de gris
+            hsv: Image en HSV
+        
+        Returns:
+            Liste des objets détectés
+        """
+        objects = []
+        
+        # Étape 1: Créer une segmentation par couleur (K-means)
+        color_mask = self._segment_by_color(image)
+        
+        # Étape 2: Améliorer la segmentation avec une morphologie
+        kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (5, 5))
+        color_mask = cv2.morphologyEx(color_mask, cv2.MORPH_CLOSE, kernel)
+        color_mask = cv2.morphologyEx(color_mask, cv2.MORPH_OPEN, kernel)
+        
+        # Étape 3: Détecter les contours
+        contours, _ = cv2.findContours(color_mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+        
+        # Étape 4: Analyser chaque contour
+        object_id = 0
+        for contour in contours:
+            area = cv2.contourArea(contour)
+            
+            # Filtrer par taille
+            if area < self.min_object_size:
+                continue
+            if self.max_object_size and area > self.max_object_size:
+                continue
+            
+            # Créer un objet VisualObject
+            visual_obj = self._analyze_contour(image, gray, hsv, contour, 
+                                              object_id, color_mask)
+            if visual_obj:
+                objects.append(visual_obj)
+                object_id += 1
+        
+        return objects
+    
+    def _segment_by_color(self, image: np.ndarray, k: int = 5) -> np.ndarray:
+        """
+        Segmente l'image en régions homogènes par couleur (K-means).
+        Crée un masque binaire des régions principales.
+        
+        Args:
+            image: Image BGR
+            k: Nombre de clusters de couleur
+        
+        Returns:
+            Masque binaire des régions
+        """
+        # Redimensionner pour performance
+        h, w = image.shape[:2]
+        img_small = cv2.resize(image, (min(w, 300), min(h, 300)))
+        
+        # K-means clustering
+        data = img_small.reshape((-1, 3)).astype(np.float32)
+        criteria = (cv2.TERM_CRITERIA_EPS + cv2.TERM_CRITERIA_MAX_ITER, 10, 1.0)
+        _, labels, centers = cv2.kmeans(data, k, None, criteria, 10, cv2.KMEANS_RANDOM_CENTERS)
+        
+        # Créer un masque pour les clusters principaux (supprimer bruit)
+        cluster_sizes = np.bincount(labels.flatten())
+        main_clusters = np.argsort(cluster_sizes)[-2:]  # Les 2 plus grands clusters
+        
+        mask = np.zeros(labels.shape, dtype=np.uint8)
+        for cluster_id in main_clusters:
+            mask[labels == cluster_id] = 255
+        
+        # Redimensionner au format original
+        mask = cv2.resize(mask, (w, h), interpolation=cv2.INTER_NEAREST)
+        
+        return mask
+    
+    def _analyze_contour(self, image: np.ndarray, gray: np.ndarray, 
+                        hsv: np.ndarray, contour: np.ndarray, 
+                        obj_id: int, mask: np.ndarray) -> Optional[VisualObject]:
+        """
+        Analyse un contour donné et crée un objet VisualObject.
+        
+        Args:
+            image: Image originale BGR
+            gray: Image en niveaux de gris
+            hsv: Image en HSV
+            contour: Contour OpenCV
+            obj_id: ID de l'objet
+            mask: Masque de segmentation
+        
+        Returns:
+            VisualObject ou None si invalide
+        """
+        # Propriétés géométriques
+        area = cv2.contourArea(contour)
+        perimeter = cv2.arcLength(contour, True)
+        
+        if perimeter == 0:
+            return None
+        
+        # Centroid
+        M = cv2.moments(contour)
+        if M["m00"] == 0:
+            return None
+        centroid = (M["m10"] / M["m00"], M["m01"] / M["m00"])
+        
+        # Bounding box
+        x, y, w, h = cv2.boundingRect(contour)
+        
+        # Solidity (rapport aire/convex hull)
+        hull = cv2.convexHull(contour)
+        hull_area = cv2.contourArea(hull)
+        solidity = area / hull_area if hull_area > 0 else 0
+        
+        # Aspect ratio
+        aspect_ratio = float(w) / h if h > 0 else 0
+        
+        # Contour regularity (compacité)
+        contour_regularity = (4 * np.pi * area) / (perimeter ** 2)
+        
+        # Extraire la région pour analyse de couleur
+        region_mask = np.zeros(gray.shape, dtype=np.uint8)
+        cv2.drawContours(region_mask, [contour], 0, 255, -1)
+        
+        # Chromatic stability (homogénéité chromatique)
+        chromatic_stability = self._compute_chromatic_stability(
+            image, hsv, region_mask
+        )
+        
+        # Couleur dominante dans la région
+        dominant_color = self._get_region_dominant_color(image, region_mask)
+        
+        # Luminosité moyenne dans la région
+        mean_brightness = float(np.mean(gray[region_mask == 255]))
+        
+        # Classification du type d'objet
+        label = self._classify_object(
+            chromatic_stability, contour_regularity, aspect_ratio, area
+        )
+        
+        return VisualObject(
+            object_id=obj_id,
+            label=label,
+            area=int(area),
+            perimeter=float(perimeter),
+            centroid=centroid,
+            bounding_box=(x, y, w, h),
+            dominant_color=dominant_color,
+            mean_brightness=mean_brightness,
+            chromatic_stability=chromatic_stability,
+            contour_regularity=min(contour_regularity, 1.0),
+            solidity=float(solidity),
+            aspect_ratio=aspect_ratio
+        )
+    
+    def _compute_chromatic_stability(self, image: np.ndarray, 
+                                    hsv: np.ndarray, mask: np.ndarray) -> float:
+        """
+        Mesure l'homogénéité chromatique d'une région.
+        Plus la valeur est proche de 1, plus la région est chromatiquement stable.
+        
+        Args:
+            image: Image BGR
+            hsv: Image HSV
+            mask: Masque de la région
+        
+        Returns:
+            Score de stabilité chromatique (0-1)
+        """
+        # Saturation moyenne et écart-type
+        s_channel = hsv[:, :, 1]
+        region_saturation = s_channel[mask == 255]
+        
+        if len(region_saturation) == 0:
+            return 0.0
+        
+        # Une région avec saturation élevée et stable est chromatiquement stable
+        mean_sat = np.mean(region_saturation)
+        std_sat = np.std(region_saturation)
+        
+        # Score: saturation élevée (>100) et peu variable
+        sat_score = min(mean_sat / 255, 1.0)  # 0-1 basé sur saturation
+        var_score = 1.0 - (std_sat / 255)  # Pénalité pour variance
+        
+        stability = (sat_score + var_score) / 2
+        return float(max(0, min(stability, 1.0)))
+    
+    def _get_region_dominant_color(self, image: np.ndarray, 
+                                  mask: np.ndarray) -> Tuple[int, int, int]:
+        """
+        Extrait la couleur dominante d'une région.
+        
+        Args:
+            image: Image BGR
+            mask: Masque de la région
+        
+        Returns:
+            Tuple (B, G, R)
+        """
+        region = image[mask == 255]
+        if len(region) == 0:
+            return (0, 0, 0)
+        
+        # Moyenne des couleurs dans la région
+        dominant = tuple(np.mean(region, axis=0).astype(int))
+        return dominant
+    
+    def _classify_object(self, chromatic_stability: float, 
+                        contour_regularity: float, aspect_ratio: float,
+                        area: int) -> str:
+        """
+        Classifie un objet détecté.
+        
+        Categories:
+        - 'geometric': Formes régulières, homogènes
+        - 'artificial': Contours nets, chromatique stable
+        - 'natural': Chromatique stable, irrégulier
+        - 'abstract': Zones de couleur sans forme claire
+        - 'unknown': Défaut de classification
+        
+        Args:
+            chromatic_stability: Homogénéité chromatique (0-1)
+            contour_regularity: Régularité du contour (0-1)
+            aspect_ratio: Ratio largeur/hauteur
+            area: Surface de l'objet
+        
+        Returns:
+            Label de classification
+        """
+        # Objets géométriques: très réguliers, très homogènes
+        if contour_regularity > 0.7 and chromatic_stability > 0.6:
+            # Aspect ratio proches de 1 = carré/cercle
+            if 0.5 < aspect_ratio < 2.0:
+                return 'geometric'
+        
+        # Objets artificiels: contours nets, chromatique stable
+        if contour_regularity > 0.5 and chromatic_stability > 0.5:
+            return 'artificial'
+        
+        # Objets naturels: chromatique stable mais irréguliers
+        if chromatic_stability > 0.4:
+            return 'natural'
+        
+        # Objets abstraits: faible stabilité chromatique
+        if area > 100:
+            return 'abstract'
+        
+        return 'unknown'
+
