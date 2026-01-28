@@ -59,25 +59,32 @@ Un package Python modulaire pour le traitement et l'analyse d'images avec optimi
 
 ## 📦 Installation
 
-### Option 1: Installation avec C/C++ Optimizations (Recommandé)
+### Option 1: Installation depuis PyPI (Recommandé - Simplest)
+```bash
+# Installation directe depuis PyPI avec optimisations C/C++ pré-compilées
+pip install image-processor-lite
+```
+
+### Option 2: Installation depuis le dépôt GitHub
 ```bash
 # Clone the repository
 git clone https://github.com/Maik-start/image-processor-lite.git
 cd image-processor-lite
-git checkout v1.0.0-optimized
 
 # Install with C/C++ optimizations
 bash install_with_optimizations.sh
 ```
 
-### Option 2: Installation basique (avec fallback Python)
+### Option 3: Installation basique (avec fallback Python)
 ```bash
 pip install -r requirements.txt
 pip install -e .
 ```
 
-### Option 3: Installation avec support OCR (EasyOCR)
+### Option 4: Installation avec support OCR (EasyOCR)
 ```bash
+pip install image-processor-lite[text_detection]
+```
 pip install easyocr
 pip install -e .
 ```

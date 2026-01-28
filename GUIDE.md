@@ -2,24 +2,28 @@
 
 ## 📦 Installation
 
-### Option 1: Installation avec C/C++ Optimizations (Recommandé)
+### Option 1: Installation depuis PyPI (Recommandé - Simplest)
+```bash
+# Installation directe avec optimisations C/C++ pré-compilées
+pip install image-processor-lite
+```
+
+### Option 2: Installation depuis le dépôt GitHub
 ```bash
 git clone https://github.com/Maik-start/image-processor-lite.git
 cd image-processor-lite
-git checkout v1.0.0-optimized
 bash install_with_optimizations.sh
 ```
 
-### Option 2: Installation basique (avec fallback Python)
+### Option 3: Installation basique (avec fallback Python)
 ```bash
 pip install -r requirements.txt
 pip install -e .
 ```
 
-### Option 3: Installation avec EasyOCR
+### Option 4: Installation avec EasyOCR
 ```bash
-pip install easyocr
-pip install -e .
+pip install image-processor-lite[text_detection]
 ```
 
 ---

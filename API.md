@@ -1,5 +1,15 @@
 # Références Techniques et API
 
+## 📦 Installation Rapide
+
+```bash
+pip install image-processor-lite
+```
+
+Pour plus d'informations, voir [GUIDE.md](GUIDE.md) et [README.md](README.md).
+
+---
+
 ## 🎯 Modules Principaux
 
 ### 1. Text Detection
