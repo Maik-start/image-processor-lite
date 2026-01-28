@@ -1,8 +1,8 @@
 # Guide de Publication sur PyPI
 
-## ✅ Prérequis
+## ✅ Publication Réussie
 
-Votre package `imgprocessor` est prêt pour PyPI. Vérifiez que vous avez :
+Votre package `image-processor-lite` est maintenant publié sur PyPI ! ✅
 
 1. **Compte PyPI** : Créez-le sur https://pypi.org/account/register/
 2. **Token d'authentification** : Générez-le depuis https://pypi.org/manage/account/
@@ -52,9 +52,9 @@ twine upload dist/*
 
 ### 6. Vérifier la publication
 
-Une fois publié, votre package sera visible sur :
-- https://pypi.org/project/imgprocessor/
-- Installable via : `pip install imgprocessor`
+Votre package est maintenant visible sur :
+- https://pypi.org/project/image-processor-lite/
+- Installable via : `pip install image-processor-lite`
 
 ## 🔐 Configuration de ~/.pypirc (Optionnel mais recommandé)
 
@@ -77,7 +77,7 @@ twine upload dist/*
 
 ## ⚠️ Points importants
 
-1. **Nom unique** : `imgprocessor` doit être disponible sur PyPI
+1. **Nom unique** : `image-processor-lite` est maintenant publié sur PyPI ✅
 2. **Versions sémantiques** : Respectez la versioning (1.0.0, 1.0.1, etc.)
 3. **Nettoyage** : Supprimez les anciens `dist/` avant chaque build
 4. **Métadonnées** : Assurez-vous que `author`, `description` et `url` sont corrects

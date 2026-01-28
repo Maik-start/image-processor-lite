@@ -38,7 +38,7 @@ setup(
     description="Package modulaire de traitement et d'analyse d'images avec modules C/C++ optimisés",
     long_description=long_description,
     long_description_content_type="text/markdown",
-    url="https://github.com/username/imgprocessor",
+    url="https://github.com/Maik-start/image-processor-lite",
     packages=find_packages(),
     package_data={
         "imgprocessor": [
@@ -85,9 +85,9 @@ setup(
         ],
     },
     project_urls={
-        "Bug Reports": "https://github.com/username/imgprocessor/issues",
-        "Source": "https://github.com/username/imgprocessor",
-        "Documentation": "https://github.com/username/imgprocessor/wiki",
+        "Bug Reports": "https://github.com/Maik-start/image-processor-lite/issues",
+        "Source": "https://github.com/Maik-start/image-processor-lite",
+        "Documentation": "https://github.com/Maik-start/image-processor-lite/wiki",
     },
     keywords="image processing opencv computer vision optimization",
     zip_safe=False,

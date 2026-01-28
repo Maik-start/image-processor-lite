@@ -4,8 +4,8 @@
 
 ### Option 1: Installation avec C/C++ Optimizations (Recommandé)
 ```bash
-git clone https://github.com/Maik-start/imgprocessor.git
-cd imgprocessor
+git clone https://github.com/Maik-start/image-processor-lite.git
+cd image-processor-lite
 git checkout v1.0.0-optimized
 bash install_with_optimizations.sh
 ```
@@ -281,7 +281,7 @@ flake8 imgprocessor         # Code style ok?
 
 ## 🔗 Ressources
 
-- **Dépôt**: https://github.com/Maik-start/imgprocessor
+- **Dépôt**: https://github.com/Maik-start/image-processor-lite
 - **Branches**: `develop` (dev), `stable` (préproduction), `master` (prod)
 - **Tag**: `v1.0.0-optimized` (version actuelle)
 - **Modules C/C++**: `imgprocessor/cpp/`

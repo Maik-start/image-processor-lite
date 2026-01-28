@@ -1,4 +1,4 @@
-# imgprocessor - Package de Traitement d'Images Modulaire
+# image-processor-lite - Package de Traitement d'Images Modulaire
 
 Un package Python modulaire pour le traitement et l'analyse d'images avec optimisations natives C/C++.
 
@@ -62,8 +62,8 @@ Un package Python modulaire pour le traitement et l'analyse d'images avec optimi
 ### Option 1: Installation avec C/C++ Optimizations (Recommandé)
 ```bash
 # Clone the repository
-git clone https://github.com/Maik-start/imgprocessor.git
-cd imgprocessor
+git clone https://github.com/Maik-start/image-processor-lite.git
+cd image-processor-lite
 git checkout v1.0.0-optimized
 
 # Install with C/C++ optimizations
