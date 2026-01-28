@@ -32,7 +32,7 @@ if os.environ.get('SKIPPING_CPP_BUILD', '0') == '0':
     compile_cpp_modules()
 
 setup(
-    name="imgprocessor",
+    name="image-processor-lite",
     version="1.0.0",
     author="ImageProcessor Team",
     description="Package modulaire de traitement et d'analyse d'images avec modules C/C++ optimisés",
@@ -89,7 +89,6 @@ setup(
         "Source": "https://github.com/username/imgprocessor",
         "Documentation": "https://github.com/username/imgprocessor/wiki",
     },
-    python_requires=">=3.8",
     keywords="image processing opencv computer vision optimization",
     zip_safe=False,
 )
