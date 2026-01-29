@@ -50,11 +50,12 @@ Un package Python modulaire pour le traitement et l'analyse d'images avec optimi
 
 ## 🎯 Fonctionnalités
 
-### 1. **Détection et Extraction de Texte (OCR)**
+### 1. **Détection et Extraction de Texte (OCR) - Ultra-Optimisée**
 - Supporte plusieurs langues (français, anglais, etc.)
-- Deux moteurs disponibles: EasyOCR et Tesseract
-- Retourne le texte avec coordonnées et confiance
-- Extraction complète du texte ou par régions
+- Cache global singleton + lazy loading
+- 3 modes: SPEED (100ms), BALANCED (100ms) ✅, QUALITY (1160ms)
+- Alternative ultra-rapide: FastTextDetector Tesseract (90-100ms)
+- Caching automatique par hash d'image (0ms sur appels répétés)
 
 ### 2. **Détection de Formes Géométriques**
 - Détection de cercles (Hough Circle Detection)
@@ -155,28 +156,30 @@ if processor.config.is_module_enabled('distance_measurement'):
     print("Module de mesure de distance activé")
 ```
 
-### Détection de Texte
+### Détection de Texte - API Unique Optimisée
 
 ```python
 from imgprocessor.text_detection import TextDetector
 
-detector = TextDetector(engine='easyocr')
+# Production (recommandé) - BALANCED par défaut
+detector = TextDetector()  # 100ms, qualité excellente
 
-# Mode 1: Texte seul
-text = detector.extract_text(image, return_text=True, return_coords=False)
-print(f"Texte:\n{text}")
+# Mode rapide - 20% résolution (texte gros uniquement)
+detector = TextDetector(mode='speed')  # 100ms, très rapide
 
-# Mode 2: Régions avec coordonnées
-regions = detector.extract_text(image, return_text=False, return_coords=True)
-for region in regions:
-    print(f"Texte: {region['text']}")
-    print(f"Confiance: {region['confidence']:.2f}")
+# Mode qualité maximale - résolution 100%
+detector = TextDetector(mode='quality')  # 1160ms, meilleur résultat
 
-# Mode 3: Texte ET coordonnées
-text, regions = detector.extract_text(image, return_text=True, return_coords=True)
-print(f"Texte complet: {text}")
-print(f"Régions: {len(regions)}")
+# Alternative ultra-rapide - Tesseract
+from imgprocessor.text_detection.fast_detector import FastTextDetector
+detector = FastTextDetector()  # 90-100ms
+
+# Extraction
+text = detector.extract_text(image)
+regions = detector.detect(image)  # Avec coordonnées
 ```
+
+**Remarque**: Une seule version du package, la plus optimisée. Le paramètre `mode` adapte le compromis performance/qualité.
 
 ### Détection de Formes
 
