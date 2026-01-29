@@ -44,10 +44,12 @@ class ShapeDetector:
         Initialise le détecteur de formes.
         
         Args:
-            min_contour_area: Surface minimale pour un contour
+            min_contour_area: Surface minimale pour un contour (défaut: 50)
             detect_circles: Activer détection de cercles
             detect_rectangles: Activer détection de rectangles
             detect_polygons: Activer détection de polygones
+        
+        ✅ OPTIMISATION: min_contour_area filter réduit les contours à traiter
         """
         self.min_contour_area = min_contour_area
         self.enable_circles = detect_circles

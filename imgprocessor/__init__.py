@@ -197,20 +197,41 @@ class ImageProcessor:
         
         return self.text_detector.detect(image, min_confidence)
     
-    def extract_text(self, image: np.ndarray, min_confidence: float = 0.5) -> Optional[str]:
+    def extract_text(self, image: np.ndarray, min_confidence: float = 0.5, 
+                     return_text: bool = True, return_coords: bool = False):
         """
-        Extrait tout le texte d'une image.
+        Extrait le texte d'une image en suivant l'ordre naturel de lecture.
+        
+        Le développeur peut choisir ce qu'il veut retourner:
+        - return_text=True, return_coords=False  → Retourne juste le texte (défaut)
+        - return_text=False, return_coords=True  → Retourne juste les coordonnées
+        - return_text=True, return_coords=True   → Retourne (texte, coordonnées)
         
         Args:
             image: Image en format numpy array
             min_confidence: Seuil de confiance minimum
+            return_text: Si True, retourne le texte
+            return_coords: Si True, retourne les coordonnées des régions
         
         Returns:
-            Texte extrait ou None si module désactivé
+            - Si return_text=True et return_coords=False:  str (texte extrait)
+            - Si return_text=False et return_coords=True:  List[Dict] (coordonnées)
+            - Si return_text=True et return_coords=True:   Tuple[str, List[Dict]] (texte, coordonnées)
+            - None si module désactivé
+        
+        Examples:
+            # Juste le texte (défaut)
+            text = processor.extract_text(image)
+            
+            # Juste les coordonnées
+            coords = processor.extract_text(image, return_text=False, return_coords=True)
+            
+            # Les deux
+            text, coords = processor.extract_text(image, return_coords=True)
         """
         if not self._ensure_text_detector():
             return None
-        return self.text_detector.extract_text(image, min_confidence)
+        return self.text_detector.extract_text(image, min_confidence, return_text, return_coords)
     
     def detect_shapes(self, image: np.ndarray, optimize: bool = True) -> Optional[List[Shape]]:
         """

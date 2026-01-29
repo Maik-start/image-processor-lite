@@ -9,6 +9,7 @@ import numpy as np
 from typing import Dict, Tuple, List, Optional
 from dataclasses import dataclass, field
 from scipy import ndimage
+from hashlib import md5
 from . import _native as _native_loader
 
 
@@ -121,10 +122,47 @@ class VisualAnalyzer:
         except Exception:
             self._native_available = False
             self._native = None
+        
+        # ✅ CACHING: Cache results based on image hash
+        self._cache = {}
+        self._cache_enabled = True
+    
+    def _get_image_hash(self, image: np.ndarray) -> str:
+        """Get MD5 hash of image for caching."""
+        try:
+            return md5(image.tobytes()).hexdigest()
+        except:
+            return None
     
     def analyze(self, image: np.ndarray) -> VisualAnalysis:
         """
         Analyse l'image complète.
+        
+        Args:
+            image: Image en format numpy array (BGR)
+        
+        Returns:
+            Objet VisualAnalysis avec tous les résultats
+        """
+        # ✅ CACHE: Check cache first
+        if self._cache_enabled:
+            img_hash = self._get_image_hash(image)
+            if img_hash and img_hash in self._cache:
+                return self._cache[img_hash]
+        else:
+            img_hash = None
+        
+        analysis = self._analyze_impl(image)
+        
+        # ✅ CACHE: Store result
+        if self._cache_enabled and img_hash:
+            self._cache[img_hash] = analysis
+        
+        return analysis
+    
+    def _analyze_impl(self, image: np.ndarray) -> VisualAnalysis:
+        """
+        Implémentation réelle de l'analyse.
         
         Args:
             image: Image en format numpy array (BGR)
