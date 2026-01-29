@@ -33,7 +33,7 @@ if os.environ.get('SKIPPING_CPP_BUILD', '0') == '0':
 
 setup(
     name="image-processor-lite",
-    version="1.0.2",
+    version="1.0.3",
     author="ImageProcessor Team",
     description="Package modulaire de traitement et d'analyse d'images avec modules C/C++ optimisés",
     long_description=long_description,
