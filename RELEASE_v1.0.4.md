@@ -121,14 +121,9 @@ python 10_real_world_usage.py
 ### Documentation Files
 - **[README.md](package_dev/README.md)** - Overview and features
 - **[GUIDE.md](package_dev/GUIDE.md)** - Detailed usage guide
-- **[CHANGELOG.md](package_dev/CHANGELOG.md)** - Full version history
 - **[examples/README.md](package_dev/examples/README.md)** - Examples guide
 - **[MODIFICATIONS_APPLIED.md](package_dev/MODIFICATIONS_APPLIED.md)** - Technical details
 
-### Performance Reports
-- [PERFORMANCE_BENCHMARK_REPORT.md](PERFORMANCE_BENCHMARK_REPORT.md)
-- [PHASE_2_RESULTS.md](PHASE_2_RESULTS.md)
-- [PERFORMANCE_RESULTS.json](PERFORMANCE_RESULTS.json)
 
 ---
 
