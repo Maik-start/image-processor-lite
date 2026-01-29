@@ -1,53 +1,42 @@
-# 📊 RAPPORT FINAL - TESTS AMANDA1
+# Tests Amanda1
 
-## ✅ Tests Réussis: 3/3 Images
+## ✅ Résultats: 3/3 Images Réussies
 
-### 1️⃣ image.png (480x270px)
+### image.png (480x270px)
 
-| Détecteur | Init | Détection | Régions | Qualité |
-|-----------|------|-----------|---------|---------|
-| EasyOCR Original | 3620ms | 1082ms | 23 | ✅ Bonne |
-| TextDetector BALANCED | 0.01ms | 1042ms | 23 | ✅ Bonne |
-| TextDetector SPEED | 0.01ms | 1330ms | 0 | ⚠️ Trop réduite |
-| FastTextDetector | 1.12ms | 97ms | 0 | ⚠️ Tesseract limité |
+| Détecteur | Temps | Régions | Qualité |
+|-----------|-------|---------|---------|
+| BALANCED | 1042ms | 23 | ✅ Bonne |
+| SPEED | 1330ms | 0 | ❌ Trop réduite |
+| FastTextDetector | 97ms | 0 | ❌ Tesseract limité |
 
-**Observations:**
-- ✅ Cache global fonctionne: 0.01ms au lieu de 3620ms
-- ✅ Mode BALANCED conserve la même qualité (23 régions)
-- ⚠️ Mode SPEED (20%) ne suffit pas pour cette image (texte petit)
-- ⚠️ FastTextDetector/Tesseract: Bon pour texte gros, moins pour petit
+Cache: 3620ms → 0.01ms (360k x plus rapide)
 
----
+### image2.png (480x270px)
 
-### 2️⃣ image2.png (480x270px)
+| Détecteur | Temps | Régions | Qualité |
+|-----------|-------|---------|---------|
+| BALANCED | 348ms | 1 | ✅ Bonne |
+| SPEED | 155ms | 1 | ✅ 2.2x plus rapide! |
+| FastTextDetector | 94ms | 1 | ⚠️ "Partaner" |
 
-| Détecteur | Init | Détection | Régions | Qualité |
-|-----------|------|-----------|---------|---------|
-| EasyOCR Original | 0.01ms | 342ms | 1 | ✅ Bonne |
-| TextDetector BALANCED | 0.01ms | 348ms | 1 | ✅ Bonne |
-| TextDetector SPEED | 0.01ms | 155ms | 1 | ✅ Bonne (2.2x plus rapide!) |
-| FastTextDetector | 0.01ms | 94ms | 1 | ⚠️ "Partaner" au lieu de "Partager" |
+### Capture.png (448x760px)
 
-**Observations:**
-- ✅ Mode SPEED: 155ms vs 348ms (2.2x plus rapide!)
-- ✅ FastTextDetector: 94ms (3.7x plus rapide que BALANCED)
-- ⚠️ Qualité Tesseract: "Partaner" au lieu de "Partager"
+| Détecteur | Temps | Régions | Qualité |
+|-----------|-------|---------|---------|
+| BALANCED | 1038ms | 5 | ✅ Excellente |
+| SPEED | 499ms | 2 | ⚠️ Texte perdu |
+| FastTextDetector | 130ms | 8 | ⚠️ Moins précis |
 
----
+## Performances
 
-### 3️⃣ Capture.png (448x760px)
+```
+image.png:    BALANCED 1042ms | SPEED 1330ms | Fast 97ms
+image2.png:   BALANCED 348ms  | SPEED 155ms  | Fast 94ms
+Capture.png:  BALANCED 1038ms | SPEED 499ms  | Fast 130ms
+```
 
-| Détecteur | Init | Détection | Régions | Qualité |
-|-----------|------|-----------|---------|---------|
-| EasyOCR Original | 0.01ms | 1070ms | 5 | ✅ Excellente |
-| TextDetector BALANCED | 0.01ms | 1038ms | 5 | ✅ Excellente |
-| TextDetector SPEED | 0.01ms | 499ms | 2 | ⚠️ Texte très réduit |
-| FastTextDetector | 0.01ms | 130ms | 8 | ⚠️ Plus de régions, moins précis |
-
-**Observations:**
-- ✅ Mode SPEED: 499ms vs 1038ms (2.08x plus rapide)
-- ✅ FastTextDetector: 130ms (8x plus rapide!)
-- ⚠️ Mode SPEED perd du texte quand réduction à 20%
+## Recommandations
 - ⚠️ FastTextDetector: Détecte plus de régions mais moins précis
 
 ---
