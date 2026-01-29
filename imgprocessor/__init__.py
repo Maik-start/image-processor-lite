@@ -33,7 +33,7 @@ from .optimization import ImageOptimizer, FastImageProcessor
 from .optimized_adapters import get_optimized_filters, get_optimized_geometry
 from . import math_utils
 
-__version__ = "1.0.0"
+__version__ = "1.0.2"
 __author__ = "ImageProcessor Team"
 
 # Les optimisations sont silencieuses par défaut
