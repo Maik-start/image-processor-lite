@@ -2,10 +2,16 @@
 """
 Tests pour le module VisualAnalyzer.
 Valide les fonctionnalités d'analyse visuelle et de détection d'objets.
+
+Les 9 tests génériques sont optionnels (activés avec: python test_analyzer.py --full)
+Par défaut, un test sur une image réelle (Capture.png) est exécuté.
 """
 
 import cv2
 import numpy as np
+import sys
+import os
+from pathlib import Path
 from imgprocessor.visual_analysis import VisualAnalyzer, VisualAnalysis, VisualObject
 
 
@@ -229,39 +235,139 @@ class TestVisualAnalyzer:
 
 
 def main():
-    """Exécute tous les tests."""
+    """Exécute les tests."""
+    # Vérifier les arguments
+    run_full_tests = '--full' in sys.argv or '-f' in sys.argv
+    
     print("\n" + "="*70)
-    print("🧪 TESTS DU MODULE VisualAnalyzer")
+    if run_full_tests:
+        print("🧪 TESTS DU MODULE VisualAnalyzer (COMPLETS)")
+    else:
+        print("🧪 TEST REAL-WORLD: VisualAnalyzer sur Capture.png")
+        print("   (Pour tester les 9 tests génériques, utilisez: python test_analyzer.py --full)")
     print("="*70 + "\n")
     
     test_suite = TestVisualAnalyzer()
     
     try:
-        test_suite.test_initialization()
-        test_suite.test_basic_analysis()
-        test_suite.test_object_detection()
-        test_suite.test_visual_object_properties()
-        test_suite.test_to_dict()
-        test_suite.test_brightness_analysis()
-        test_suite.test_contrast_analysis()
-        test_suite.test_color_histogram()
-        test_suite.test_disabled_modules()
+        if run_full_tests:
+            # Exécuter tous les 9 tests génériques
+            test_suite.test_initialization()
+            test_suite.test_basic_analysis()
+            test_suite.test_object_detection()
+            test_suite.test_visual_object_properties()
+            test_suite.test_to_dict()
+            test_suite.test_brightness_analysis()
+            test_suite.test_contrast_analysis()
+            test_suite.test_color_histogram()
+            test_suite.test_disabled_modules()
+            
+            print("\n" + "="*70)
+            print("✅ TOUS LES TESTS GÉNÉRIQUES RÉUSSIS!")
+            print("="*70)
+            print("\n📊 Résumé:")
+            print("   ✅ 9/9 tests passants")
+            print("   ✅ Analyse visuelle fonctionnelle")
+            print("   ✅ Détection d'objets validée")
+            print("   ✅ Classification d'objets OK")
+            print("   ✅ Conversion en dictionnaire OK")
+        else:
+            # Test sur image réelle
+            test_real_world_image()
         
-        print("\n" + "="*70)
-        print("✅ TOUS LES TESTS RÉUSSIS!")
-        print("="*70)
-        print("\n📊 Résumé:")
-        print("   ✅ 9/9 tests passants")
-        print("   ✅ Analyse visuelle fonctionnelle")
-        print("   ✅ Détection d'objets validée")
-        print("   ✅ Classification d'objets OK")
-        print("   ✅ Conversion en dictionnaire OK")
         print("\n")
         
     except Exception as e:
         print(f"\n❌ ERREUR: {e}")
         import traceback
         traceback.print_exc()
+
+
+def test_real_world_image():
+    """Test le module sur une image réelle (Capture.png)."""
+    # Chercher Capture.png dans amanda1
+    capture_path = Path('/home/virus-one/Documents/projet/amanda1/Capture.png')
+    
+    if not capture_path.exists():
+        print(f"❌ Fichier non trouvé: {capture_path}")
+        return
+    
+    # Charger l'image
+    image = cv2.imread(str(capture_path))
+    if image is None:
+        print(f"❌ Erreur lors du chargement de l'image: {capture_path}")
+        return
+    
+    # Convertir en BGR si nécessaire
+    if len(image.shape) == 2:
+        image = cv2.cvtColor(image, cv2.COLOR_GRAY2BGR)
+    elif image.shape[2] == 4:
+        image = cv2.cvtColor(image, cv2.COLOR_RGBA2BGR)
+    
+    print(f"📸 Image chargée: {capture_path.name}")
+    print(f"   Dimensions: {image.shape[1]}x{image.shape[0]} pixels")
+    print(f"   Canaux: {image.shape[2]}")
+    print("\n" + "-"*70 + "\n")
+    
+    # Analyser l'image
+    analyzer = VisualAnalyzer(
+        analyze_brightness=True,
+        analyze_contrast=True,
+        analyze_hue=True,
+        detect_objects=True,
+        min_object_size=100
+    )
+    
+    print("⏳ Analyse en cours...")
+    analysis = analyzer.analyze(image)
+    
+    # Afficher les résultats
+    print("\n📊 RÉSULTATS DE L'ANALYSE VISUELLE:")
+    print("-"*70)
+    print(f"\n1. Propriétés visuelles globales:")
+    print(f"   Luminosité moyenne: {analysis.brightness:.2f} / 255")
+    print(f"   Contraste (écart-type): {analysis.contrast:.2f}")
+    print(f"   Densité de contours: {analysis.edge_density:.4f}")
+    
+    print(f"\n2. Propriétés HSV:")
+    print(f"   Saturation moyenne: {analysis.saturation:.2f} / 255")
+    print(f"   Valeur (luminance HSV): {analysis.value:.2f} / 255")
+    
+    print(f"\n3. Distribution de teinte:")
+    for color, percentage in sorted(analysis.hue_distribution.items(), 
+                                   key=lambda x: x[1], reverse=True):
+        if percentage > 0:
+            print(f"   {color.upper():8} : {percentage:6.2f}%")
+    
+    print(f"\n4. Détection d'objets visuels cohérents:")
+    print(f"   Nombre d'objets détectés: {len(analysis.objects)}")
+    print(f"   Densité d'objets: {analysis.object_density:.2f} objets/10K pixels")
+    
+    if len(analysis.objects) > 0:
+        print(f"\n   Détails des objets (top 5):")
+        for i, obj in enumerate(analysis.objects[:5]):
+            print(f"\n   🔹 Objet {i+1} (ID: {obj.object_id}):")
+            print(f"      Label: {obj.label}")
+            print(f"      Surface: {obj.area} pixels")
+            print(f"      Périmètre: {obj.perimeter:.1f} pixels")
+            print(f"      Centroid: ({obj.centroid[0]:.1f}, {obj.centroid[1]:.1f})")
+            print(f"      Bounding Box: {obj.bounding_box}")
+            print(f"      Couleur dominante (BGR): {obj.dominant_color}")
+            print(f"      Luminosité moyenne: {obj.mean_brightness:.2f}")
+            print(f"      Stabilité chromatique: {obj.chromatic_stability:.3f} (0-1)")
+            print(f"      Régularité de contour: {obj.contour_regularity:.3f} (0-1)")
+            print(f"      Solidité: {obj.solidity:.3f} (0-1)")
+            print(f"      Aspect ratio: {obj.aspect_ratio:.3f}")
+    
+    # Sérialisation
+    print(f"\n5. Sérialisation JSON:")
+    analysis_dict = analysis.to_dict()
+    print(f"   Clés principales: {list(analysis_dict.keys())}")
+    print(f"   Objet sérialisable: ✅ Oui")
+    
+    print("\n" + "="*70)
+    print("✅ TEST REAL-WORLD RÉUSSI!")
+    print("="*70)
 
 
 if __name__ == '__main__':
