@@ -30,11 +30,14 @@ class TextRegion:
 class TextDetector:
     """
     Détecteur de texte utilisant EasyOCR ou Tesseract.
+    ✅ VERSION OPTIMISÉE: Lazy-loading du moteur OCR (chargement à la demande)
     """
     
     def __init__(self, languages: List[str] = None, engine: str = 'easyocr'):
         """
         Initialise le détecteur de texte.
+        
+        ✅ OPTIMISATION: Le moteur OCR n'est chargé que lors du premier usage
         
         Args:
             languages: Liste des langues à reconnaître (ex: ['en', 'fr'])
@@ -53,37 +56,56 @@ class TextDetector:
         
         self.languages = languages
         self.engine = engine
-        self.reader = None
-        self.init_success = False
         
-        if engine == 'easyocr':
+        # ✅ LAZY LOADING: Ne pas charger le moteur à l'initialisation
+        self.reader = None
+        self.pytesseract = None
+        self.init_success = False
+        self._is_initialized = False  # Flag pour lazy-loading
+        
+    def _lazy_init_easyocr(self):
+        """Initialise EasyOCR à la demande (lazy-loading)."""
+        if self._is_initialized or self.engine != 'easyocr':
+            return
+        
+        try:
+            import easyocr
+            # Essayer avec les langues spécifiées, fallback sur 'en' si erreur
             try:
-                import easyocr
-                # Essayer avec les langues spécifiées, fallback sur 'en' si erreur
-                try:
-                    self.reader = easyocr.Reader(self.languages, gpu=False, verbose=False)
-                    self.init_success = True
-                except Exception as lang_error:
-                    print(f"Fallback: Tentative avec anglais uniquement - {lang_error}")
-                    try:
-                        self.reader = easyocr.Reader(['en'], gpu=False, verbose=False)
-                        self.init_success = True
-                        self.languages = ['en']
-                    except Exception as fallback_error:
-                        print(f"Avertissement: easyOCR non disponible - {fallback_error}")
-            except ImportError:
-                raise ImportError("easyocr non installé. Installez avec: pip install easyocr")
-        elif engine == 'tesseract':
-            try:
-                import pytesseract
-                self.pytesseract = pytesseract
+                self.reader = easyocr.Reader(self.languages, gpu=False, verbose=False)
                 self.init_success = True
-            except ImportError:
-                raise ImportError("pytesseract non installé. Installez avec: pip install pytesseract")
+            except Exception as lang_error:
+                print(f"Fallback: Tentative avec anglais uniquement - {lang_error}")
+                try:
+                    self.reader = easyocr.Reader(['en'], gpu=False, verbose=False)
+                    self.init_success = True
+                    self.languages = ['en']
+                except Exception as fallback_error:
+                    print(f"Avertissement: easyOCR non disponible - {fallback_error}")
+        except ImportError:
+            raise ImportError("easyocr non installé. Installez avec: pip install easyocr")
+        
+        self._is_initialized = True
+    
+    def _lazy_init_tesseract(self):
+        """Initialise Tesseract à la demande (lazy-loading)."""
+        if self._is_initialized or self.engine != 'tesseract':
+            return
+        
+        try:
+            import pytesseract
+            self.pytesseract = pytesseract
+            self.init_success = True
+        except ImportError:
+            raise ImportError("pytesseract non installé. Installez avec: pip install pytesseract")
+        
+        self._is_initialized = True
     
     def detect(self, image: np.ndarray, min_confidence: float = 0.5) -> List[TextRegion]:
         """
         Détecte le texte dans une image.
+        
+        ✅ OPTIMISATION: Initialise le moteur OCR à la première utilisation seulement
         
         Args:
             image: Image en format numpy array (BGR ou RGB)
@@ -92,6 +114,12 @@ class TextDetector:
         Returns:
             Liste des régions de texte détectées
         """
+        # ✅ LAZY LOADING: Initialiser le moteur seulement au premier usage
+        if self.engine == 'easyocr':
+            self._lazy_init_easyocr()
+        elif self.engine == 'tesseract':
+            self._lazy_init_tesseract()
+        
         if not self.init_success:
             print("Avertissement: Moteur OCR non initialisé correctement")
             return []
