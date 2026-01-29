@@ -8,6 +8,9 @@ import numpy as np
 from pathlib import Path
 from typing import Tuple, List, Dict, Optional
 import platform
+import logging
+
+logger = logging.getLogger(__name__)
 
 # Déterminer le chemin vers les librairies compilées
 LIB_PATH = Path(__file__).parent.parent / "cpp" / "build"
@@ -44,7 +47,6 @@ class ImageFilters:
             self.lib = load_library("image_filters")
             self._setup_functions()
         except FileNotFoundError:
-            print("⚠️  Librairie image_filters non disponible, utilisant fallback Python")
             self.lib = None
     
     def _setup_functions(self):
@@ -109,7 +111,7 @@ class ImageFilters:
             )
             return output
         except Exception as e:
-            print(f"Erreur C/C++: {e}, utilisant fallback Python")
+            logger.error(f"C/C++ error: {e}, using Python fallback")
             return self._gaussian_blur_python(image, kernel_size, sigma)
     
     def _gaussian_blur_python(self, image: np.ndarray, kernel_size: int, 
@@ -138,7 +140,7 @@ class ImageFilters:
             )
             return output
         except Exception as e:
-            print(f"Erreur C/C++: {e}")
+            logger.error(f"C/C++ error: {e}")
             return self._bgr_to_grayscale_python(image)
     
     def _bgr_to_grayscale_python(self, image: np.ndarray) -> np.ndarray:
@@ -168,7 +170,7 @@ class ImageFilters:
             )
             return output
         except Exception as e:
-            print(f"Erreur C/C++: {e}")
+            logger.error(f"C/C++ error: {e}")
             return self._canny_edges_python(image, low_threshold, high_threshold)
     
     def _canny_edges_python(self, image: np.ndarray, low: float, 
@@ -190,7 +192,6 @@ class GeometryUtils:
             self.lib = load_library("geometry_utils")
             self._setup_functions()
         except FileNotFoundError:
-            print("⚠️  Librairie geometry_utils non disponible, utilisant fallback Python")
             self.lib = None
     
     def _setup_functions(self):
@@ -254,7 +255,7 @@ class GeometryUtils:
                 ctypes.c_float(x2), ctypes.c_float(y2)
             )
         except Exception as e:
-            print(f"Erreur C/C++: {e}")
+            logger.error(f"C/C++ error: {e}")
             return np.sqrt((x2 - x1)**2 + (y2 - y1)**2)
     
     def manhattan_distance(self, x1: float, y1: float, 
