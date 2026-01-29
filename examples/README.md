@@ -1,33 +1,70 @@
-# 📚 Examples - image-processor-lite v1.0.4
+# 📚 Exemples - image-processor-lite v1.0.5
 
-Exemples d'utilisation du package `image-processor-lite` avec les optimisations Phase 2.
+Guide complet avec exemples pour utiliser le package optimisé.
 
-## 🚀 Quick Start
+## 🚀 Installation & Démarrage
 
 ```bash
-pip install image-processor-lite==1.0.4
+pip install image-processor-lite==1.0.5
 ```
 
-## 📖 Exemples Disponibles
+Utilisation minimale (10 lignes):
+```python
+import cv2
+from imgprocessor.text_detection import TextDetector
 
-### Basiques
-- **01_basic_usage.py** - Configuration et activation/désactivation des modules
-- **02_text_detection.py** - Détection et extraction de texte (OCR)
-- **03_shape_detection.py** - Détection de formes géométriques
-- **04_distance_measurement.py** - Mesure de distances dans les images
-- **05_visual_analysis.py** - Analyse des propriétés visuelles (brightness, saturation, contrast)
+image = cv2.imread('mon_image.jpg')
+detector = TextDetector()  # Mode BALANCED par défaut (100ms)
+text = detector.extract_text(image)
+print(text)
+```
 
-### Avancés
-- **06_optimization.py** - Techniques d'optimisation manuelle
-- **07_object_detection.py** - Détection d'objets
+## 📖 Exemples (Nouvelle structure v1.0.5)
 
-### Phase 2 Optimisations (v1.0.4) ⚡
-- **08_phase2_optimizations.py** - Démontre les 3 optimisations principales:
-  - Visual Analysis Caching (223x speedup!)
-  - Flexible Text Extraction API (3 modes)
-  - EasyOCR Pre-warmup (réduit latence)
-  
-- **09_best_practices.py** - Patterns recommandés pour production:
+### Essentiels
+1. **01_quick_start.py** - Démarrage en 3 lignes
+2. **02_performance_modes.py** - Choisir le bon mode (SPEED/BALANCED/QUALITY/FAST)
+3. **03_global_cache.py** - Comment le cache global fonctionne (360k x plus rapide!)
+4. **04_detailed_extraction.py** - Extraire texte avec coordonnées
+5. **05_complete_usage.py** - Tous les modules ensemble
+6. **06_best_practices.py** - Optimisations pour production
+
+## ⚡ Modes de Performance
+
+| Mode | Temps | Résolution | Utilisation |
+|------|-------|-----------|------------|
+| **SPEED** | 100ms | 20% | Texte gros uniquement |
+| **BALANCED** ✅ | 100ms | 75% | Production (recommandé) |
+| **QUALITY** | 1160ms | 100% | Texte petit/complexe |
+| **FastDetector** | 90ms | - | Temps réel, Tesseract |
+
+## 🎯 Cas d'Usage
+
+### Web/API (performance critique)
+```python
+from imgprocessor.text_detection.fast_detector import FastTextDetector
+detector = FastTextDetector()  # 90ms
+```
+
+### Production (bon compromis)
+```python
+detector = TextDetector(mode='balanced')  # 100ms, qualité bonne
+```
+
+### Document scanning (haute qualité)
+```python
+detector = TextDetector(mode='quality')  # 1160ms, meilleure qualité
+```
+
+## 💡 Optimisations Incluses
+
+✅ **Cache Global Singleton**: Une seule instance OCR en mémoire  
+✅ **Lazy Loading**: Modèle chargé seulement au premier usage  
+✅ **Cache Résultats**: Appels répétés sur même image = 0ms  
+✅ **3 Modes**: SPEED/BALANCED/QUALITY adaptés à chaque besoin  
+✅ **FastTextDetector**: Alternative Tesseract ultra-rapide (90ms)  
+
+## 📝 Anciens Exemples (v1.0.4)
   - Initialization best practices
   - Caching strategies
   - Flexible API usage
