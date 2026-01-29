@@ -82,6 +82,7 @@ class TextDetector:
                     self.languages = ['en']
                 except Exception as fallback_error:
                     # easyOCR non disponible, fallback silencieux
+                    pass
         except ImportError:
             raise ImportError("easyocr non installé. Installez avec: pip install easyocr")
         
