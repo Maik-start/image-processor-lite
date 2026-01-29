@@ -217,18 +217,20 @@ import cv2
 import time
 from imgprocessor import ImageProcessor
 
-processor = ImageProcessor()
-processor.config.disable_all_modules()
-processor.config.enable_module('text_detection', True)
-processor.config.set_module_options('text_detection', {
-    'engine': 'tesseract'
-})
+import cv2
+import time
+from imgprocessor.text_detection import TextDetector
 
-image = cv2.imread('sample_image_with_shapes.jpg')
+# Créer détecteur avec warmup automatique
+detector = TextDetector(engine='easyocr')
+
+image = cv2.imread('sample_image.jpg')
 start = time.time()
-text = processor.extract_text(image)
+
+# Extraire texte avec flexible API
+text = detector.extract_text(image, return_text=True, return_coords=False)
 print(f"Temps d'exécution: {time.time() - start:.3f}s")
-PYTHON
+print(f"Texte: {text}")
 ```
 
 ## Commandes pour Intégrer les Modifications

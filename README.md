@@ -158,18 +158,24 @@ if processor.config.is_module_enabled('distance_measurement'):
 ### Détection de Texte
 
 ```python
-# Détecter le texte
-if processor.config.is_module_enabled('text_detection'):
-    text_regions = processor.detect_text(image)
-    
-    for region in text_regions:
-        print(f"Texte: {region.text}")
-        print(f"Confiance: {region.confidence:.2f}")
-        print(f"Position: {region.bbox}")
+from imgprocessor.text_detection import TextDetector
 
-# Extraire tout le texte
-full_text = processor.extract_text(image)
-print(full_text)
+detector = TextDetector(engine='easyocr')
+
+# Mode 1: Texte seul
+text = detector.extract_text(image, return_text=True, return_coords=False)
+print(f"Texte:\n{text}")
+
+# Mode 2: Régions avec coordonnées
+regions = detector.extract_text(image, return_text=False, return_coords=True)
+for region in regions:
+    print(f"Texte: {region['text']}")
+    print(f"Confiance: {region['confidence']:.2f}")
+
+# Mode 3: Texte ET coordonnées
+text, regions = detector.extract_text(image, return_text=True, return_coords=True)
+print(f"Texte complet: {text}")
+print(f"Régions: {len(regions)}")
 ```
 
 ### Détection de Formes
@@ -195,18 +201,24 @@ if processor.config.is_module_enabled('shape_detection'):
 ### Mesure de Distances
 
 ```python
+from imgprocessor.distance_measurement import DistanceMeasurer
+
+measurer = DistanceMeasurer()
+
 # Mesurer la distance entre deux points
-if processor.config.is_module_enabled('distance_measurement'):
-    distance = processor.measure_distance((100, 50), (200, 150))
-    print(f"Distance: {distance.distance}{distance.unit}")
+distance = measurer.measure_line_distance(image, (100, 50), (200, 150))
+print(f"Distance: {distance} pixels")
 ```
 
 ### Analyse Visuelle
 
 ```python
+from imgprocessor.visual_analysis import VisualAnalyzer
+
+analyzer = VisualAnalyzer()
+
 # Analyser les propriétés visuelles
-if processor.config.is_module_enabled('visual_analysis'):
-    analysis = processor.analyze_visual_properties(image)
+analysis = analyzer.analyze(image)
     
     print(f"Luminosité: {analysis.brightness:.2f}")
     print(f"Contraste: {analysis.contrast:.2f}")

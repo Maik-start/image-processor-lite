@@ -56,28 +56,28 @@ if processor.config.is_module_enabled('distance_measurement'):
     print("Module activé")
 ```
 
-### Extraction de Texte (NEW v1.0.3 - Flexible API)
+### Extraction de Texte (NEW v1.0.4 - Flexible API)
 ```python
+from imgprocessor.text_detection import TextDetector
+
+detector = TextDetector(engine='easyocr')
+
 # Mode 1: Texte seul (défaut, rétrocompatible)
-text = processor.extract_text(image)
+text = detector.extract_text(image, return_text=True, return_coords=False)
 print(text)
 
 # Mode 2: Coordonnées seules
-regions = processor.extract_text(image, return_text=False, return_coords=True)
+regions = detector.extract_text(image, return_text=False, return_coords=True)
 for region in regions:
     print(f"Texte: {region['text']}")
     print(f"Position: {region['bbox']}")
     print(f"Confiance: {region['confidence']}")
 
 # Mode 3: Texte et coordonnées
-text, regions = processor.extract_text(image, return_coords=True)
+text, regions = detector.extract_text(image, return_text=True, return_coords=True)
 print(f"Texte complet:\n{text}")
 print(f"Régions détectées: {len(regions)}")
 ```
-
-### Détection de Texte (Accès direct)
-```python
-regions = processor.detect_text(image, language='fr')
 for region in regions:
     print(f"Texte: {region.text}")
     print(f"Confiance: {region.confidence:.2f}")
@@ -94,21 +94,28 @@ for shape in shapes:
 
 ### Mesure de Distances
 ```python
-distance = processor.measure_distance((x1, y1), (x2, y2), unit='mm')
-print(f"Distance: {distance} mm")
+from imgprocessor.distance_measurement import DistanceMeasurer
+
+measurer = DistanceMeasurer()
+distance = measurer.measure_line_distance(image, (x1, y1), (x2, y2))
+print(f"Distance: {distance} pixels")
 ```
 
 ### Analyse Visuelle (OPTIMIZED - 223x faster with caching!)
 ```python
+from imgprocessor.visual_analysis import VisualAnalyzer
+
+analyzer = VisualAnalyzer()
+
 # Première analyse (full computation ~200ms)
-analysis = processor.analyze_visual(image)
+analysis = analyzer.analyze(image)
 
 # Deuxième analyse même image (cache hit ~2ms!)
-analysis_again = processor.analyze_visual(image)
+analysis_again = analyzer.analyze(image)
 
 print(f"Luminosité: {analysis.brightness}")
+print(f"Saturation: {analysis.saturation}")
 print(f"Contraste: {analysis.contrast}")
-print(f"Densité contours: {analysis.edge_density}")
 ```
 
 ---
