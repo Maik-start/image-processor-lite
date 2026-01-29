@@ -9,6 +9,7 @@ import numpy as np
 from typing import Dict, Tuple, List, Optional
 from dataclasses import dataclass, field
 from scipy import ndimage
+from . import _native as _native_loader
 
 
 @dataclass
@@ -112,6 +113,14 @@ class VisualAnalyzer:
         self.bins = bins
         self.min_object_size = min_object_size
         self.max_object_size = max_object_size
+        # native acceleration available?
+        self._native_available = True
+        try:
+            # keep loader module; actual functions may raise NotImplementedError
+            self._native = _native_loader
+        except Exception:
+            self._native_available = False
+            self._native = None
     
     def analyze(self, image: np.ndarray) -> VisualAnalysis:
         """
@@ -410,26 +419,29 @@ class VisualAnalyzer:
         Returns:
             Masque binaire des régions
         """
-        # Redimensionner pour performance
+        # Try native implementation first (if compiled)
+        if self._native is not None:
+            try:
+                return self._native.segment_by_color(image, k)
+            except NotImplementedError:
+                pass
+
+        # Fallback Python implementation
         h, w = image.shape[:2]
         img_small = cv2.resize(image, (min(w, 300), min(h, 300)))
-        
-        # K-means clustering
+
         data = img_small.reshape((-1, 3)).astype(np.float32)
         criteria = (cv2.TERM_CRITERIA_EPS + cv2.TERM_CRITERIA_MAX_ITER, 10, 1.0)
         _, labels, centers = cv2.kmeans(data, k, None, criteria, 10, cv2.KMEANS_RANDOM_CENTERS)
-        
-        # Créer un masque pour les clusters principaux (supprimer bruit)
+
         cluster_sizes = np.bincount(labels.flatten())
-        main_clusters = np.argsort(cluster_sizes)[-2:]  # Les 2 plus grands clusters
-        
+        main_clusters = np.argsort(cluster_sizes)[-2:]
+
         mask = np.zeros(labels.shape, dtype=np.uint8)
         for cluster_id in main_clusters:
             mask[labels == cluster_id] = 255
-        
-        # Redimensionner au format original
+
         mask = cv2.resize(mask, (w, h), interpolation=cv2.INTER_NEAREST)
-        
         return mask
     
     def _analyze_contour(self, image: np.ndarray, gray: np.ndarray, 
@@ -525,21 +537,26 @@ class VisualAnalyzer:
         Returns:
             Score de stabilité chromatique (0-1)
         """
-        # Saturation moyenne et écart-type
+        # Try native implementation first
+        if self._native is not None:
+            try:
+                return float(self._native.compute_chromatic_stability(hsv, mask))
+            except NotImplementedError:
+                pass
+
+        # Fallback Python implementation
         s_channel = hsv[:, :, 1]
         region_saturation = s_channel[mask == 255]
-        
+
         if len(region_saturation) == 0:
             return 0.0
-        
-        # Une région avec saturation élevée et stable est chromatiquement stable
+
         mean_sat = np.mean(region_saturation)
         std_sat = np.std(region_saturation)
-        
-        # Score: saturation élevée (>100) et peu variable
-        sat_score = min(mean_sat / 255, 1.0)  # 0-1 basé sur saturation
-        var_score = 1.0 - (std_sat / 255)  # Pénalité pour variance
-        
+
+        sat_score = min(mean_sat / 255, 1.0)
+        var_score = 1.0 - (std_sat / 255)
+
         stability = (sat_score + var_score) / 2
         return float(max(0, min(stability, 1.0)))
     
@@ -604,4 +621,44 @@ class VisualAnalyzer:
             return 'abstract'
         
         return 'unknown'
+
+    def draw_bounding_boxes(self, image: np.ndarray, analysis: VisualAnalysis,
+                            color: Tuple[int, int, int] = (0, 255, 0),
+                            thickness: int = 2,
+                            font_scale: float = 0.5,
+                            show_labels: bool = True) -> np.ndarray:
+        """
+        Dessine des encadrements autour des objets détectés retournés dans
+        `analysis.objects`.
+
+        Args:
+            image: Image BGR (sera copiée avant modification)
+            analysis: Résultats de `analyze()` contenant `objects`
+            color: Couleur du rectangle (B, G, R)
+            thickness: Épaisseur des lignes
+            font_scale: Taille du texte pour les labels
+            show_labels: Si True, affiche `id:label` au-dessus de chaque box
+
+        Returns:
+            Image annotée (nouveau numpy.ndarray)
+        """
+        annotated = image.copy()
+
+        for obj in analysis.objects:
+            x, y, w, h = obj.bounding_box
+            # dessiner le rectangle
+            cv2.rectangle(annotated, (x, y), (x + w, y + h), color, thickness)
+
+            if show_labels:
+                label = f"{obj.object_id}:{obj.label}"
+                # calculer position du texte
+                text_pos = (x, y - 6 if y - 6 > 6 else y + 12)
+                # arrière-plan pour lisibilité
+                (tw, th), _ = cv2.getTextSize(label, cv2.FONT_HERSHEY_SIMPLEX, font_scale, 1)
+                cv2.rectangle(annotated, (text_pos[0], text_pos[1] - th - 2),
+                              (text_pos[0] + tw, text_pos[1] + 2), color, -1)
+                cv2.putText(annotated, label, (text_pos[0], text_pos[1]),
+                            cv2.FONT_HERSHEY_SIMPLEX, font_scale, (0, 0, 0), 1, cv2.LINE_AA)
+
+        return annotated
 

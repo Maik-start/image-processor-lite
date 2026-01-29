@@ -8,6 +8,7 @@ test_lazy_loading.py
 benchmark_performance.py
 test_optimizations.py
 tests/test_*.py
+perf_analyzer.py
 
 # Generated report files
 FINAL_REPORT.txt
