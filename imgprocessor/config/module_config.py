@@ -30,21 +30,21 @@ class ImageProcessorConfig:
             config_file: Chemin optionnel vers un fichier de configuration JSON
         """
         self.modules: Dict[str, ModuleConfig] = {
-            'text_detection': ModuleConfig(enabled=True, options={
+            'text_detection': ModuleConfig(enabled=False, options={
                 'language': ['fra', 'eng'],
                 'engine': 'easyocr'  # ou 'tesseract'
             }),
-            'shape_detection': ModuleConfig(enabled=True, options={
+            'shape_detection': ModuleConfig(enabled=False, options={
                 'detect_circles': True,
                 'detect_rectangles': True,
                 'detect_polygons': True,
                 'min_contour_area': 50
             }),
-            'distance_measurement': ModuleConfig(enabled=True, options={
+            'distance_measurement': ModuleConfig(enabled=False, options={
                 'unit': 'pixels',  # ou 'mm', 'cm'
                 'precision': 2
             }),
-            'visual_analysis': ModuleConfig(enabled=True, options={
+            'visual_analysis': ModuleConfig(enabled=False, options={
                 'analyze_brightness': True,
                 'analyze_contrast': True,
                 'analyze_hue': True,

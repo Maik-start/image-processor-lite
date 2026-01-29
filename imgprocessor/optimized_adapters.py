@@ -21,8 +21,6 @@ class OptimizedImageFilters:
         self.use_cpp = HAS_CPP_MODULES
         if HAS_CPP_MODULES:
             self.cpp_filters = get_image_filters()
-        
-        print(f"[Filter Backend] {'C/C++ Optimized' if HAS_CPP_MODULES else 'Pure Python'}")
     
     def gaussian_blur(self, image: np.ndarray, kernel_size: int = 5, 
                      sigma: float = 1.0) -> np.ndarray:
@@ -74,8 +72,6 @@ class OptimizedGeometryUtils:
         else:
             from .. import math_utils
             self.math = math_utils
-        
-        print(f"[Geometry Backend] {'C/C++ Optimized' if HAS_CPP_MODULES else 'Pure Python'}")
     
     def euclidean_distance(self, x1: float, y1: float, 
                           x2: float, y2: float) -> float:

@@ -36,36 +36,8 @@ from . import math_utils
 __version__ = "1.0.0"
 __author__ = "ImageProcessor Team"
 
-# Afficher l'état des optimisations au premier import
-def _print_optimization_status():
-    """Affiche le statut des optimisations activées."""
-    filters = get_optimized_filters()
-    geom = get_optimized_geometry()
-    
-    status_filter = "C/C++ ⚡" if filters.use_cpp else "Pure Python"
-    status_geom = "C/C++ ⚡" if geom.use_cpp else "Pure Python"
-    
-    # Afficher une seule fois
-    if not hasattr(sys, '_imgprocessor_status_printed'):
-        print(f"""
-╔════════════════════════════════════════════════════════╗
-║ 🚀 image-processor-lite v{__version__} - Modules Optimisés Actifs
-║
-║  Image Filters:    {status_filter}
-║  Geometry Utils:   {status_geom}
-║  Math Utils:       Pure Python ⚡ (Vecteurs, Polygones)
-║
-║  Pour en savoir plus:
-║  - OPTIMIZATION_GUIDE.md
-║  - imgprocessor/cpp/README.md
-╚════════════════════════════════════════════════════════╝
-""")
-        sys.modules['_imgprocessor_status_printed'] = True
-
-try:
-    _print_optimization_status()
-except Exception:
-    pass  # Silencieux en cas d'erreur
+# Les optimisations sont silencieuses par défaut
+# Les utilisateurs peuvent vérifier les détails dans le code
 
 
 class ImageProcessor:
@@ -120,7 +92,7 @@ class ImageProcessor:
                     engine=options.get('engine', 'easyocr')
                 )
             except Exception as e:
-                print(f"Avertissement: Module texte non initialisé - {e}")
+                # Erreur silencieuse lors de l'init du module texte
                 self.text_detector = None
         else:
             self.text_detector = None

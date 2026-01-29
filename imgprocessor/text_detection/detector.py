@@ -75,13 +75,13 @@ class TextDetector:
                 self.reader = easyocr.Reader(self.languages, gpu=False, verbose=False)
                 self.init_success = True
             except Exception as lang_error:
-                print(f"Fallback: Tentative avec anglais uniquement - {lang_error}")
+                # Fallback silencieux sur anglais
                 try:
                     self.reader = easyocr.Reader(['en'], gpu=False, verbose=False)
                     self.init_success = True
                     self.languages = ['en']
                 except Exception as fallback_error:
-                    print(f"Avertissement: easyOCR non disponible - {fallback_error}")
+                    # easyOCR non disponible, fallback silencieux
         except ImportError:
             raise ImportError("easyocr non installé. Installez avec: pip install easyocr")
         
@@ -121,7 +121,7 @@ class TextDetector:
             self._lazy_init_tesseract()
         
         if not self.init_success:
-            print("Avertissement: Moteur OCR non initialisé correctement")
+            # Moteur OCR non initialisé correctement
             return []
         
         if self.engine == 'easyocr':
@@ -145,7 +145,7 @@ class TextDetector:
         try:
             results = self.reader.readtext(rgb_image, detail=1)
         except Exception as e:
-            print(f"Erreur easyOCR: {e}")
+            # Erreur easyOCR, retour vide silencieux
             return []
         
         text_regions = []
