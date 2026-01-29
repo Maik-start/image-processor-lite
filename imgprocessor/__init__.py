@@ -76,29 +76,45 @@ class ImageProcessor:
         self.optimizer = ImageOptimizer(optimization)
         self.optimization_enabled = True
         
-        # Initialiser les modules selon la configuration
-        self._init_modules()
+        # Initialiser les modules à None - ils seront créés lazily à la demande
+        self.text_detector = None
+        self.shape_detector = None
+        self.distance_measurer = None
+        self.visual_analyzer = None
+        self._modules_created = {
+            'text_detection': False,
+            'shape_detection': False,
+            'distance_measurement': False,
+            'visual_analysis': False
+        }
     
-    def _init_modules(self) -> None:
-        """Initialise les modules selon la configuration."""
-        # Text Detection
-        if self.config.is_module_enabled('text_detection'):
-            try:
-                options = self.config.get_module_options('text_detection')
-                # Utiliser des codes de langue modernes (en, fr au lieu de eng, fra)
-                languages = options.get('language', ['en', 'fr'])
-                self.text_detector = TextDetector(
-                    languages=languages,
-                    engine=options.get('engine', 'easyocr')
-                )
-            except Exception as e:
-                # Erreur silencieuse lors de l'init du module texte
-                self.text_detector = None
-        else:
+    def _ensure_text_detector(self) -> bool:
+        """Crée le text_detector si nécessaire et activé. Retourne True si prêt."""
+        if not self.config.is_module_enabled('text_detection'):
+            return False
+        if self._modules_created['text_detection'] and self.text_detector is not None:
+            return True
+        try:
+            options = self.config.get_module_options('text_detection')
+            languages = options.get('language', ['en', 'fr'])
+            self.text_detector = TextDetector(
+                languages=languages,
+                engine=options.get('engine', 'easyocr')
+            )
+            self._modules_created['text_detection'] = True
+            return True
+        except Exception as e:
             self.text_detector = None
-        
-        # Shape Detection
-        if self.config.is_module_enabled('shape_detection'):
+            self._modules_created['text_detection'] = False
+            return False
+    
+    def _ensure_shape_detector(self) -> bool:
+        """Crée le shape_detector si nécessaire et activé."""
+        if not self.config.is_module_enabled('shape_detection'):
+            return False
+        if self._modules_created['shape_detection'] and self.shape_detector is not None:
+            return True
+        try:
             options = self.config.get_module_options('shape_detection')
             self.shape_detector = ShapeDetector(
                 min_contour_area=options.get('min_contour_area', 50),
@@ -106,21 +122,39 @@ class ImageProcessor:
                 detect_rectangles=options.get('detect_rectangles', True),
                 detect_polygons=options.get('detect_polygons', True)
             )
-        else:
+            self._modules_created['shape_detection'] = True
+            return True
+        except Exception as e:
             self.shape_detector = None
-        
-        # Distance Measurement
-        if self.config.is_module_enabled('distance_measurement'):
+            self._modules_created['shape_detection'] = False
+            return False
+    
+    def _ensure_distance_measurer(self) -> bool:
+        """Crée le distance_measurer si nécessaire et activé."""
+        if not self.config.is_module_enabled('distance_measurement'):
+            return False
+        if self._modules_created['distance_measurement'] and self.distance_measurer is not None:
+            return True
+        try:
             options = self.config.get_module_options('distance_measurement')
             self.distance_measurer = DistanceMeasurer(
                 unit=options.get('unit', 'pixels'),
                 precision=options.get('precision', 2)
             )
-        else:
+            self._modules_created['distance_measurement'] = True
+            return True
+        except Exception as e:
             self.distance_measurer = None
-        
-        # Visual Analysis
-        if self.config.is_module_enabled('visual_analysis'):
+            self._modules_created['distance_measurement'] = False
+            return False
+    
+    def _ensure_visual_analyzer(self) -> bool:
+        """Crée le visual_analyzer si nécessaire et activé."""
+        if not self.config.is_module_enabled('visual_analysis'):
+            return False
+        if self._modules_created['visual_analysis'] and self.visual_analyzer is not None:
+            return True
+        try:
             options = self.config.get_module_options('visual_analysis')
             self.visual_analyzer = VisualAnalyzer(
                 analyze_brightness=options.get('analyze_brightness', True),
@@ -128,8 +162,19 @@ class ImageProcessor:
                 analyze_hue=options.get('analyze_hue', True),
                 bins=options.get('bins', 256)
             )
-        else:
+            self._modules_created['visual_analysis'] = True
+            return True
+        except Exception as e:
             self.visual_analyzer = None
+            self._modules_created['visual_analysis'] = False
+            return False
+    
+    def _init_modules(self) -> None:
+        """Initialise les modules selon la configuration. DEPRECATED - utiliser les _ensure_* methods."""
+        self._ensure_text_detector()
+        self._ensure_shape_detector()
+        self._ensure_distance_measurer()
+        self._ensure_visual_analyzer()
     
     def detect_text(self, image: np.ndarray, min_confidence: float = 0.5, optimize: bool = True) -> Optional[List[TextRegion]]:
         """
@@ -143,7 +188,7 @@ class ImageProcessor:
         Returns:
             Liste des régions de texte ou None si module désactivé
         """
-        if not self.config.is_module_enabled('text_detection') or self.text_detector is None:
+        if not self._ensure_text_detector():
             return None
         
         # Optimiser l'image si activé
@@ -163,7 +208,7 @@ class ImageProcessor:
         Returns:
             Texte extrait ou None si module désactivé
         """
-        if not self.config.is_module_enabled('text_detection') or self.text_detector is None:
+        if not self._ensure_text_detector():
             return None
         return self.text_detector.extract_text(image, min_confidence)
     
@@ -178,7 +223,7 @@ class ImageProcessor:
         Returns:
             Liste des formes détectées ou None si module désactivé
         """
-        if not self.config.is_module_enabled('shape_detection') or self.shape_detector is None:
+        if not self._ensure_shape_detector():
             return None
         
         # Optimiser l'image si activé
@@ -189,13 +234,13 @@ class ImageProcessor:
     
     def detect_circles(self, image: np.ndarray) -> Optional[List[Shape]]:
         """Détecte les cercles."""
-        if not self.config.is_module_enabled('shape_detection') or self.shape_detector is None:
+        if not self._ensure_shape_detector():
             return None
         return self.shape_detector.detect_circles(image)
     
     def detect_rectangles(self, image: np.ndarray) -> Optional[List[Shape]]:
         """Détecte les rectangles."""
-        if not self.config.is_module_enabled('shape_detection') or self.shape_detector is None:
+        if not self._ensure_shape_detector():
             return None
         return self.shape_detector.detect_rectangles(image)
     
@@ -210,7 +255,7 @@ class ImageProcessor:
         Returns:
             Objet Distance ou None si module désactivé
         """
-        if not self.config.is_module_enabled('distance_measurement') or self.distance_measurer is None:
+        if not self._ensure_distance_measurer():
             return None
         return self.distance_measurer.euclidean_distance(point1, point2)
     
@@ -225,7 +270,7 @@ class ImageProcessor:
         Returns:
             Objet VisualAnalysis ou None si module désactivé
         """
-        if not self.config.is_module_enabled('visual_analysis') or self.visual_analyzer is None:
+        if not self._ensure_visual_analyzer():
             return None
         
         # Optimiser l'image si activé
