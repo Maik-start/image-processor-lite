@@ -30,8 +30,9 @@ config_example.json
 sample_image_with_shapes.jpg
 install_with_optimizations.sh
 
-# C extensions
-*.so
+# C extensions (but include compiled native modules)
+# *.so  # ALLOW compiled _native.cpython-*.so from visual_analysis/
+!imgprocessor/visual_analysis/_native.cpython-*.so
 
 # Distribution / packaging
 .Python
