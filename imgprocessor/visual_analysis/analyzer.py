@@ -422,8 +422,14 @@ class VisualAnalyzer:
         # Try native implementation first (if compiled)
         if self._native is not None:
             try:
-                return self._native.segment_by_color(image, k)
+                res = self._native.segment_by_color(image, k)
+                # Validate native result
+                if isinstance(res, np.ndarray):
+                    return res
             except NotImplementedError:
+                pass
+            except Exception:
+                # Any error from native: fallback to Python
                 pass
 
         # Fallback Python implementation
@@ -540,8 +546,13 @@ class VisualAnalyzer:
         # Try native implementation first
         if self._native is not None:
             try:
-                return float(self._native.compute_chromatic_stability(hsv, mask))
+                val = self._native.compute_chromatic_stability(hsv, mask)
+                # Validate numeric return
+                if isinstance(val, (float, int)):
+                    return float(val)
             except NotImplementedError:
+                pass
+            except Exception:
                 pass
 
         # Fallback Python implementation
