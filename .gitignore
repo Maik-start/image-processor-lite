@@ -3,13 +3,31 @@ __pycache__/
 *.py[cod]
 *$py.class
 
-# Generated report files (keep requirements.txt and test_results.txt)
+# Test and benchmark files
+test_lazy_loading.py
+benchmark_performance.py
+test_optimizations.py
+tests/test_*.py
+
+# Generated report files
 FINAL_REPORT.txt
 GITHUB_READY.txt
 IMPLEMENTATION_COMPLETE.txt
 INSTALLATION_COMPLETE.txt
 PROJECT_TREE.txt
 INSTALLATION_GUIDE.txt
+test_results.txt
+
+# Configuration and installation files
+INSTALL.py
+activate.sh
+pytest.ini
+requirements.txt
+config_example.json
+
+# Sample images and temporary files
+sample_image_with_shapes.jpg
+install_with_optimizations.sh
 
 # C extensions
 *.so
