@@ -1,10 +1,11 @@
 """
-Exemple 2: Détection de texte et extraction (v1.0.4)
-Démontre l'utilisation du module de détection de texte avec flexible API
+Exemple 2: Détection de texte et extraction
+Démontre l'utilisation avancée du module de détection de texte
 """
 
 import cv2
 import sys
+import numpy as np
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent.parent))
@@ -12,88 +13,100 @@ sys.path.insert(0, str(Path(__file__).parent.parent))
 from imgprocessor.text_detection import TextDetector
 
 
+def create_sample_text_image_advanced():
+    """Crée une image avec plusieurs textes."""
+    image = np.full((400, 600, 3), 255, dtype=np.uint8)
+    
+    # Titre
+    cv2.putText(image, "Detection Example", (50, 50), cv2.FONT_HERSHEY_SIMPLEX, 1.2, (0, 0, 0), 2)
+    
+    # Textes de différentes tailles
+    cv2.putText(image, "Large text here", (50, 150), cv2.FONT_HERSHEY_SIMPLEX, 0.9, (0, 0, 200), 2)
+    cv2.putText(image, "Small text", (50, 250), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (200, 0, 0), 1)
+    cv2.putText(image, "Medium size", (50, 350), cv2.FONT_HERSHEY_SIMPLEX, 0.75, (0, 150, 0), 1)
+    
+    return image
+
+
 def example_text_detection():
-    """Exemple de détection de texte."""
+    """Exemple de détection de texte avancée."""
     print("=" * 60)
-    print("Exemple 2: Détection de Texte (v1.0.4)")
+    print("Exemple 2: Détection de Texte - Utilisation Avancée")
     print("=" * 60)
     
     # Créer détecteur
-    detector = TextDetector(engine='easyocr')
+    print("\n✓ Initialisation du détecteur...")
+    detector = TextDetector(engine='easyocr', mode='balanced')
     
-    print("\n📝 3 modes d'extraction texte disponibles:")
-    print("  1. Text only (défaut)")
-    print("  2. Coordinates only")
-    print("  3. Text + Coordinates")
+    print("\n📝 Modes disponibles:")
+    print("  • detect() - Retourne les régions avec coordonnées")
+    print("  • extract_text() - Retourne uniquement le texte")
     
-    # Charger une image
-    image_path = Path(__file__).parent / "sample_image_with_points.jpg"
+    # Créer une image d'exemple
+    print("\n✓ Création d'une image avec texte...")
+    image = create_sample_text_image_advanced()
     
-    if not image_path.exists():
-        print(f"\n⚠️  Image d'exemple non trouvée: {image_path}")
-        print("    Créez une image test ou utilisez votre propre image.")
-        return
-    
-    image = cv2.imread(str(image_path))
-    
-    if image is None:
-        print(f"\n❌ Erreur: Impossible de charger l'image")
-        return
-    
-    print(f"\n✅ Image chargée: {image_path.name}")
+    # Sauvegarder l'image
+    sample_path = Path(__file__).parent / "sample_image_with_points.jpg"
+    cv2.imwrite(str(sample_path), image)
+    print(f"✓ Image sauvegardée: {sample_path.name}")
     
     # ========================================
-    # MODE 1: Text only
+    # MODE 1: detect() - Régions avec coordonnées
     # ========================================
     print("\n" + "=" * 60)
-    print("MODE 1: Text Only")
+    print("MODE 1: Détection avec Coordonnées")
     print("=" * 60)
     try:
-        text = detector.extract_text(image, return_text=True, return_coords=False)
-        if text:
-            print(f"Texte détecté:\n{text[:200]}...")
+        regions = detector.detect(image, min_confidence=0.5)
+        if regions:
+            print(f"✅ {len(regions)} région(s) détectée(s):\n")
+            for i, region in enumerate(regions[:5], 1):
+                print(f"  Région {i}:")
+                print(f"    Texte: {region.text}")
+                print(f"    Confiance: {region.confidence:.1%}")
+                print(f"    Position: {region.bbox}")
+            if len(regions) > 5:
+                print(f"\n  ... et {len(regions)-5} autres régions")
         else:
             print("⚠️  Aucun texte détecté")
     except Exception as e:
         print(f"❌ Erreur: {e}")
     
     # ========================================
-    # MODE 2: Coordinates only
+    # MODE 2: extract_text() - Texte simple
     # ========================================
     print("\n" + "=" * 60)
-    print("MODE 2: Coordinates Only")
+    print("MODE 2: Extraction Texte Simple")
     print("=" * 60)
     try:
-        coords = detector.extract_text(image, return_text=False, return_coords=True)
-        if coords:
-            print(f"Régions de texte détectées: {len(coords)}")
-            for i, region in enumerate(coords[:3]):  # Afficher premiers 3
-                print(f"\n  Région {i+1}:")
-                print(f"    Text: {region.get('text', 'N/A')[:30]}")
-                print(f"    Confiance: {region.get('confidence', 0):.2%}")
-                print(f"    Position: {region.get('bbox', 'N/A')}")
-            if len(coords) > 3:
-                print(f"\n  ... et {len(coords)-3} autres régions")
+        text = detector.extract_text(image, min_confidence=0.5)
+        if text:
+            print(f"✅ Texte extrait:")
+            print(f"\n{text}")
         else:
-            print("⚠️  Aucune région de texte détectée")
+            print("⚠️  Aucun texte détecté")
     except Exception as e:
         print(f"❌ Erreur: {e}")
     
     # ========================================
-    # MODE 3: Text + Coordinates
+    # MODE 3: Filtrage par confiance
     # ========================================
     print("\n" + "=" * 60)
-    print("MODE 3: Text + Coordinates")
+    print("MODE 3: Filtrage par Confiance")
     print("=" * 60)
     try:
-        result = detector.extract_text(image, return_text=True, return_coords=True)
-        if isinstance(result, tuple):
-            text, coords = result
-            print(f"Texte complet:")
-            print(f"  {text[:100]}...")
-            print(f"\nRégions avec coordonnées: {len(coords)}")
-        else:
-            print("⚠️  Mode non supporté par ce moteur")
+        # Haute confiance (> 90%)
+        regions_high = detector.detect(image, min_confidence=0.9)
+        print(f"✓ Haute confiance (>90%): {len(regions_high)} région(s)")
+        
+        # Confiance normale (> 50%)
+        regions_normal = detector.detect(image, min_confidence=0.5)
+        print(f"✓ Confiance normale (>50%): {len(regions_normal)} région(s)")
+        
+        # Toute confiance (> 0%)
+        regions_all = detector.detect(image, min_confidence=0.0)
+        print(f"✓ Toute confiance (>0%): {len(regions_all)} région(s)")
     except Exception as e:
         print(f"❌ Erreur: {e}")
     
@@ -104,15 +117,25 @@ def example_text_detection():
     print("RÉSUMÉ")
     print("=" * 60)
     print("""
-✅ Flexible API Features:
-  • Économise mémoire (retourner uniquement ce dont vous avez besoin)
-  • Performance optimisée (pas de calculs inutiles)
-  • 100% backward compatible
+✅ Utilisation de TextDetector:
+  
+  1. detect(image) → List[TextRegion]
+     • Retourne régions de texte avec coordonnées
+     • Permet analyse détaillée
+  
+  2. extract_text(image) → str
+     • Retourne texte brut combiné
+     • Plus simple et rapide
+  
+  Paramètres:
+  • min_confidence: Filtrer par confiance (0.0 à 1.0)
+  • mode: 'speed', 'balanced', 'quality'
+  • engine: 'easyocr' (par défaut)
 
-📚 Utilisation recommandée:
-  • Mode 1 (text only): Extraction texte simple
-  • Mode 2 (coords only): Localisation des régions
-  • Mode 3 (both): Analyse complète
+📚 Bonnes pratiques:
+  • Réutiliser la même instance pour plusieurs images
+  • Mode 'speed' pour texte gros/clair
+  • Mode 'quality' pour petit texte/haute précision
 """)
 
 
